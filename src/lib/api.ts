@@ -72,8 +72,8 @@ export const leaveAPI = {
 export const attendanceAPI = {
   getAll: (params?: any) => api.get('/attendance', { params }),
   getMyAttendance: () => api.get('/attendance'),
-  clockIn: (location?: any) => api.post('/attendance', { action: 'clockIn', location }),
-  clockOut: (location?: any) => api.post('/attendance', { action: 'clockOut', location }),
+  clockIn: (location?: any) => api.post('/attendance', { action: 'clock-in', location }),
+  clockOut: (location?: any) => api.post('/attendance', { action: 'clock-out', location }),
   getStats: () => api.get('/attendance/stats'),
 };
 

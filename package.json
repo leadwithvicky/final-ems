@@ -11,6 +11,7 @@
   "dependencies": {
     "axios": "^1.6.2",
     "bcryptjs": "^2.4.3",
+    "ip-cidr": "^4.0.2",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.344.0",
     "mongoose": "^8.0.3",
@@ -18,12 +19,14 @@
     "nodemailer": "^7.0.5",
     "react": "^18",
     "react-dom": "^18",
-    "react-hot-toast": "^2.4.1"
+    "react-hot-toast": "^2.4.1",
+    "swr": "^2.3.6"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
     "@types/jsonwebtoken": "^9.0.5",
     "@types/node": "^20",
+    "@types/nodemailer": "^7.0.0",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "autoprefixer": "^10.4.18",

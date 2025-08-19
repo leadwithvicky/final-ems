@@ -1,6 +1,10 @@
-'use client';
+"use client";
 
 import React, { useState } from 'react';
+import useSWR from 'swr';
+import { attendanceAPI } from '@/lib/api';
+import { useNotification } from '@/contexts/NotificationContext';
+import AttendanceAdminView from './AttendanceAdminView';
 import Modal from '../Modal';
 import { employeeAPI } from '@/lib/api';
 import axios from 'axios';
@@ -15,6 +19,38 @@ interface AdminDashboardProps {
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ hideHeader = false }) => {
   const { user, logout } = useAuth();
+  const { addNotification } = useNotification();
+
+  // Admin's own attendance SWR
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') || '' : '';
+  const { data: attendance = [], isLoading: attendanceLoading, mutate: mutateAttendance } = useSWR(token ? ['/api/attendance', token] : null, ([url, t]) => fetch(url, { headers: { Authorization: `Bearer ${t}` } }).then(res => res.json()));
+  // Find today's attendance record
+  const today = new Date();
+  const todayAttendance = Array.isArray(attendance)
+    ? attendance.find((record: any) => {
+        const recordDate = new Date(record.date);
+        return recordDate.toDateString() === today.toDateString();
+      })
+    : undefined;
+
+  const handleClockIn = async () => {
+    try {
+      await attendanceAPI.clockIn();
+      addNotification({ type: 'success', message: 'Clocked in successfully!' });
+      mutateAttendance();
+    } catch (error: any) {
+      addNotification({ type: 'error', message: error?.response?.data?.message || 'Failed to clock in' });
+    }
+  };
+  const handleClockOut = async () => {
+    try {
+      await attendanceAPI.clockOut();
+      addNotification({ type: 'success', message: 'Clocked out successfully!' });
+      mutateAttendance();
+    } catch (error: any) {
+      addNotification({ type: 'error', message: error?.response?.data?.message || 'Failed to clock out' });
+    }
+  };
   const [selectedTab, setSelectedTab] = useState('overview');
   const [showAddEmployeeModal, setShowAddEmployeeModal] = useState(false);
   const [addEmployeeLoading, setAddEmployeeLoading] = useState(false);
@@ -41,10 +77,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ hideHeader = false }) =
   ];
 
   const leaveRequests = [
-    { name: 'John Smith', type: 'Annual Leave', duration: '3 days', status: 'pending', dates: 'Mar 15-17' },
-    { name: 'Sarah Wilson', type: 'Sick Leave', duration: '1 day', status: 'approved', dates: 'Mar 14' },
-    { name: 'Mike Johnson', type: 'Personal Leave', duration: '2 days', status: 'pending', dates: 'Mar 20-21' },
-    { name: 'Lisa Brown', type: 'Annual Leave', duration: '5 days', status: 'approved', dates: 'Mar 25-29' }
+    { _id: '1', name: 'John Smith', type: 'Annual Leave', duration: '3 days', status: 'pending', dates: 'Mar 15-17' },
+    { _id: '2', name: 'Sarah Wilson', type: 'Sick Leave', duration: '1 day', status: 'approved', dates: 'Mar 14' },
+    { _id: '3', name: 'Mike Johnson', type: 'Personal Leave', duration: '2 days', status: 'pending', dates: 'Mar 20-21' },
+    { _id: '4', name: 'Lisa Brown', type: 'Annual Leave', duration: '5 days', status: 'approved', dates: 'Mar 25-29' }
   ];
 
   const recentActivities = [
@@ -116,6 +152,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ hideHeader = false }) =
   const tabs = [
     { id: 'overview', label: 'Overview', icon: TrendingUp },
     { id: 'employees', label: 'Employee Management', icon: Users },
+    { id: 'attendance', label: 'Attendance', icon: Clock },
     { id: 'leaves', label: 'Leave Management', icon: Calendar },
     { id: 'payroll', label: 'Payroll', icon: FileText },
     { id: 'communication', label: 'Communication', icon: MessageSquare }
@@ -209,13 +246,20 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ hideHeader = false }) =
             onChange={e => setEmployeeForm(f => ({ ...f, email: e.target.value }))}
             required
           />
-          <input
+          <select
             className="border rounded px-2 py-1"
-            placeholder="Department"
             value={employeeForm.department}
             onChange={e => setEmployeeForm(f => ({ ...f, department: e.target.value }))}
             required
-          />
+          >
+            <option value="">Select Department</option>
+            <option value="Developers">Development</option>
+            <option value="Human Resources">Human Resources</option>
+            <option value="Sales">Sales</option>
+            <option value="Digital Marketing">Digital Marketing</option>
+            <option value="Designers">Designers</option>
+            <option value="Trainers">Trainers</option>
+          </select>
           <input
             className="border rounded px-2 py-1"
             placeholder="Position"
@@ -223,6 +267,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ hideHeader = false }) =
             onChange={e => setEmployeeForm(f => ({ ...f, position: e.target.value }))}
             required
           />
+          
           <input
             className="border rounded px-2 py-1"
             placeholder="Salary"
@@ -310,6 +355,42 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ hideHeader = false }) =
         <div className="p-6">
           {selectedTab === 'overview' && (
             <div className="space-y-6">
+              {/* Admin's Own Attendance Section */}
+              <div className="bg-gradient-to-r from-orange-500 to-coral-500 rounded-xl p-6 text-white">
+                <h3 className="text-lg font-semibold mb-4">Today's Attendance</h3>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm opacity-90">
+                      {todayAttendance ?
+                        `Clocked in at ${todayAttendance.clockIn ? new Date(todayAttendance.clockIn).toLocaleTimeString() : ''}` :
+                        'Not clocked in yet'}
+                    </p>
+                    {todayAttendance?.clockOut && (
+                      <p className="text-sm opacity-90">
+                        Clocked out at {new Date(todayAttendance.clockOut).toLocaleTimeString()}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex space-x-3">
+                    {!todayAttendance ? (
+                      <button
+                        onClick={handleClockIn}
+                        className="bg-white text-orange-600 px-4 py-2 rounded-lg font-medium hover:bg-gray-100"
+                      >
+                        Clock In
+                      </button>
+                    ) : !todayAttendance.clockOut ? (
+                      <button
+                        onClick={handleClockOut}
+                        className="bg-white text-orange-600 px-4 py-2 rounded-lg font-medium hover:bg-gray-100"
+                      >
+                        Clock Out
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+
               {/* Leave Requests */}
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Pending Leave Requests</h3>
@@ -318,18 +399,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ hideHeader = false }) =
                   {Array.isArray(leaveRequests) && leaveRequests.filter(leave => leave.status === 'pending').map((leave, index) => (
                     <div key={leave._id || index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                       <div>
-                        <p className="font-medium text-gray-900">{leave.employee?.name || leave.name || 'Employee'}</p>
-                        <p className="text-sm text-gray-600">{leave.leaveType || leave.type} • {leave.startDate || leave.dates} - {leave.endDate || ''} • {leave.days || leave.duration} days</p>
+                        <p className="font-medium text-gray-900">{leave.name || 'Employee'}</p>
+                        <p className="text-sm text-gray-600">{leave.type} • {leave.dates} • {leave.duration} days</p>
                       </div>
                       <div className="flex space-x-2">
                         <button
-                          onClick={() => handleApproveLeave(leave._id, leave.employee?.name || leave.name || 'Employee')}
+                          onClick={() => handleApproveLeave(leave._id, leave.name || 'Employee')}
                           className="px-3 py-1 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700"
                         >
                           Approve
                         </button>
                         <button
-                          onClick={() => handleRejectLeave(leave.employee?.name || leave.name || 'Employee')}
+                          onClick={() => handleRejectLeave(leave.name || 'Employee')}
                           className="px-3 py-1 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700"
                         >
                           Reject
@@ -374,6 +455,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ hideHeader = false }) =
               </div>
             </div>
           )}
+
+
+          {selectedTab === 'attendance' && <AttendanceAdminView />}
 
           {selectedTab === 'leaves' && (
             <div className="space-y-6">

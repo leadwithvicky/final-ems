@@ -1,74 +1,50 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Calendar, User, Users, FileText, Award, Clock, MapPin, CheckCircle, XCircle } from 'lucide-react';
 import Layout from '../Layout';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNotification } from '@/contexts/NotificationContext';
-import { attendanceAPI, taskAPI, payrollAPI, leaveAPI } from '@/lib/api';
+import useSWR from 'swr';
+import { attendanceAPI } from '@/lib/api';
+
+const fetcher = async (url: string, token: string) => {
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error('Failed to fetch');
+  return res.json();
+};
 
 const EmployeeDashboard: React.FC = () => {
   const { user, logout } = useAuth();
   const { addNotification } = useNotification();
   const [selectedTab, setSelectedTab] = useState('overview');
   const [showPayslipModal, setShowPayslipModal] = useState(false);
-  
-  // Real-time data states
-  const [attendance, setAttendance] = useState([]);
-  const [tasks, setTasks] = useState([]);
-  const [payroll, setPayroll] = useState([]);
-  const [leaves, setLeaves] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [todayAttendance, setTodayAttendance] = useState(null);
 
-  // Fetch real-time data
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [attendanceRes, tasksRes, payrollRes, leavesRes] = await Promise.all([
-          attendanceAPI.getMyAttendance(),
-          taskAPI.getMyTasks(),
-          payrollAPI.getMyPayroll(),
-          leaveAPI.getMyLeaves()
-        ]);
-        
-        setAttendance(attendanceRes.data);
-        setTasks(tasksRes.data);
-        setPayroll(payrollRes.data);
-        setLeaves(leavesRes.data);
-        
-        // Check today's attendance
-        const today = new Date();
-        const todayRecord = attendanceRes.data.find((record: any) => {
-          const recordDate = new Date(record.date);
-          return recordDate.toDateString() === today.toDateString();
-        });
-        setTodayAttendance(todayRecord);
-        
-      } catch (error) {
-        addNotification({
-          type: 'error',
-          message: 'Failed to fetch data'
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Get token from localStorage (client only)
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') || '' : '';
 
-    fetchData();
-    
-    // Set up real-time updates every 30 seconds
-    const interval = setInterval(fetchData, 30000);
-    return () => clearInterval(interval);
-  }, [addNotification]);
+  // SWR hooks for each API
+  const { data: attendance = [], error: attendanceError, isLoading: attendanceLoading, mutate: mutateAttendance } = useSWR(token ? ['/api/attendance', token] : null, ([url, t]) => fetcher(url, t));
+  const { data: tasks = [], error: tasksError, isLoading: tasksLoading, mutate: mutateTasks } = useSWR(token ? ['/api/tasks', token] : null, ([url, t]) => fetcher(url, t));
+  const { data: payroll = [], error: payrollError, isLoading: payrollLoading } = useSWR(token ? ['/api/payroll', token] : null, ([url, t]) => fetcher(url, t));
+  const { data: leaves = [], error: leavesError, isLoading: leavesLoading, mutate: mutateLeaves } = useSWR(token ? ['/api/leaves/my-leaves', token] : null, ([url, t]) => fetcher(url, t));
 
   // Calculate stats from real data
-  const attendanceRate = attendance.length > 0 ? 
+  const attendanceRate = attendance.length > 0 ?
     Math.round((attendance.filter((a: any) => a.status === 'present').length / attendance.length) * 100) : 0;
-  
+
   const completedTasks = tasks.filter((t: any) => t.status === 'completed').length;
   const totalTasks = tasks.length;
   const taskCompletionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+  // Find today's attendance record
+  const today = new Date();
+  const todayAttendance = attendance.find((record: any) => {
+    const recordDate = new Date(record.date);
+    return recordDate.toDateString() === today.toDateString();
+  });
 
   const stats = [
     { label: 'Leave Balance', value: '12 days', icon: Calendar, color: 'from-teal-500 to-cyan-500' },
@@ -105,12 +81,12 @@ const EmployeeDashboard: React.FC = () => {
         type: 'success',
         message: 'Clocked in successfully!'
       });
-      // Refresh data
-      window.location.reload();
-    } catch (error) {
+      // Refresh attendance data instantly
+      mutateAttendance();
+    } catch (error: any) {
       addNotification({
         type: 'error',
-        message: 'Failed to clock in'
+        message: error?.response?.data?.message || 'Failed to clock in'
       });
     }
   };
@@ -122,12 +98,11 @@ const EmployeeDashboard: React.FC = () => {
         type: 'success',
         message: 'Clocked out successfully!'
       });
-      // Refresh data
-      window.location.reload();
-    } catch (error) {
+      mutateAttendance();
+    } catch (error: any) {
       addNotification({
         type: 'error',
-        message: 'Failed to clock out'
+        message: error?.response?.data?.message || 'Failed to clock out'
       });
     }
   };
@@ -158,7 +133,7 @@ const EmployeeDashboard: React.FC = () => {
     return null;
   }
 
-  if (loading) {
+  if (attendanceLoading || tasksLoading || payrollLoading || leavesLoading) {
     return (
       <Layout title="Employee Dashboard" user={user} onLogout={logout}>
         <div className="flex items-center justify-center h-64">
