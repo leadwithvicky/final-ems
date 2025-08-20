@@ -1,12 +1,13 @@
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret';
 
 export const verifyToken = (token: string) => {
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
     return decoded as any;
   } catch (error) {
+    console.error('Token verification failed:', error);
     return null;
   }
 };
