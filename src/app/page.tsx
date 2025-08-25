@@ -5,9 +5,9 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import Login from '@/components/Login';
 import Register from '@/components/Register';
-import SuperadminDashboard from '@/components/Dashboard/SuperadminDashboard';
-import AdminDashboard from '@/components/Dashboard/AdminDashboard';
-import EmployeeDashboard from '@/components/Dashboard/EmployeeDashboard';
+import SuperadminDashboard from '@/components/dashboard/SuperadminDashboard';
+import AdminDashboard from '@/components/dashboard/AdminDashboard';
+import EmployeeDashboard from '@/components/dashboard/EmployeeDashboard';
 
 export default function Home() {
   const { user, isLoading } = useAuth();

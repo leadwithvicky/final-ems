@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import Avatar from '@/components/Avatar';
 import Modal from '../Modal';
 
 interface Employee {
@@ -66,7 +67,12 @@ const DepartmentEmployeesModal: React.FC<DepartmentEmployeesModalProps> = ({ dep
             <tbody>
               {employees.map(emp => (
                 <tr key={emp._id} className="border-b">
-                  <td className="px-2 py-1">{emp.firstName} {emp.lastName}</td>
+                  <td className="px-2 py-1">
+                    <div className="flex items-center gap-2">
+                      <Avatar name={`${emp.firstName} ${emp.lastName}`} size={20} />
+                      <span>{emp.firstName} {emp.lastName}</span>
+                    </div>
+                  </td>
                   <td className="px-2 py-1">{emp.email}</td>
                   <td className="px-2 py-1">{emp.position}</td>
                   <td className="px-2 py-1">{emp.phone || '-'}</td>

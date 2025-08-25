@@ -9,9 +9,12 @@ import Modal from '../Modal';
 import { employeeAPI } from '@/lib/api';
 import axios from 'axios';
 import { Users, Calendar, FileText, TrendingUp, Clock, UserPlus, MessageSquare, Award } from 'lucide-react';
+import Avatar from '@/components/Avatar';
 import Layout from '../Layout';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { User as UserIcon } from 'lucide-react';
+import AvatarUploader from '@/components/AvatarUploader';
 
 interface AdminDashboardProps {
   hideHeader?: boolean;
@@ -155,7 +158,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ hideHeader = false }) =
     { id: 'attendance', label: 'Attendance', icon: Clock },
     { id: 'leaves', label: 'Leave Management', icon: Calendar },
     { id: 'payroll', label: 'Payroll', icon: FileText },
-    { id: 'communication', label: 'Communication', icon: MessageSquare }
+    { id: 'communication', label: 'Communication', icon: MessageSquare },
+    { id: 'profile', label: 'Profile', icon: UserIcon }
   ];
 
   const getStatusColor = (status: string) => {
@@ -398,7 +402,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ hideHeader = false }) =
                   {/* Replace with real leave data from backend */}
                   {Array.isArray(leaveRequests) && leaveRequests.filter(leave => leave.status === 'pending').map((leave, index) => (
                     <div key={leave._id || index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                      <div>
+                      <div className="flex items-center gap-2">
+                        <Avatar name={leave.name || 'Employee'} size={24} />
                         <p className="font-medium text-gray-900">{leave.name || 'Employee'}</p>
                         <p className="text-sm text-gray-600">{leave.type} • {leave.dates} • {leave.duration} days</p>
                       </div>
@@ -510,6 +515,36 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ hideHeader = false }) =
               <h3 className="text-lg font-semibold text-gray-900">Team Communication</h3>
               <div className="bg-gray-50 p-6 rounded-lg">
                 <p className="text-gray-600">Communication features coming soon...</p>
+              </div>
+            </div>
+          )}
+          {selectedTab === 'profile' && (
+            <div className="space-y-6">
+              <h3 className="text-lg font-semibold text-gray-900">Profile</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <AvatarUploader
+                    userId={user.id}
+                    name={user.name}
+                    avatarUrl={user.avatarUrl as any}
+                    avatarUpdatedAt={user.avatarUpdatedAt as any}
+                    onUploaded={() => {}}
+                  />
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Full Name</label>
+                    <p className="mt-1 text-sm text-gray-900">{user.name}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Email</label>
+                    <p className="mt-1 text-sm text-gray-900">{user.email}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Role</label>
+                    <p className="mt-1 text-sm text-gray-900 capitalize">{user.role}</p>
+                  </div>
+                </div>
               </div>
             </div>
           )}

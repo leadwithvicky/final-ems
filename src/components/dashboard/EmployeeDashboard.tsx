@@ -3,10 +3,13 @@
 import React, { useState } from 'react';
 import { Calendar, User, Users, FileText, Award, Clock, MapPin, CheckCircle, XCircle } from 'lucide-react';
 import Layout from '../Layout';
+import AvatarUploader from '@/components/AvatarUploader';
+import Avatar from '@/components/Avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNotification } from '@/contexts/NotificationContext';
 import useSWR from 'swr';
 import { attendanceAPI } from '@/lib/api';
+import api from '@/lib/api';
 
 const fetcher = async (url: string, token: string) => {
   const res = await fetch(url, {
@@ -21,6 +24,10 @@ const EmployeeDashboard: React.FC = () => {
   const { addNotification } = useNotification();
   const [selectedTab, setSelectedTab] = useState('overview');
   const [showPayslipModal, setShowPayslipModal] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [profileForm, setProfileForm] = useState({ firstName: '', lastName: '', email: '', phone: '', department: '', position: '' });
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
 
   // Get token from localStorage (client only)
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') || '' : '';
@@ -30,6 +37,54 @@ const EmployeeDashboard: React.FC = () => {
   const { data: tasks = [], error: tasksError, isLoading: tasksLoading, mutate: mutateTasks } = useSWR(token ? ['/api/tasks', token] : null, ([url, t]) => fetcher(url, t));
   const { data: payroll = [], error: payrollError, isLoading: payrollLoading } = useSWR(token ? ['/api/payroll', token] : null, ([url, t]) => fetcher(url, t));
   const { data: leaves = [], error: leavesError, isLoading: leavesLoading, mutate: mutateLeaves } = useSWR(token ? ['/api/leaves/my-leaves', token] : null, ([url, t]) => fetcher(url, t));
+
+  const openEdit = async () => {
+    try {
+      const res = await api.get('/employees/user/me');
+      const { employee } = res.data;
+      setProfileForm({
+        firstName: employee.firstName || '',
+        lastName: employee.lastName || '',
+        email: employee.email || '',
+        phone: employee.phone || '',
+        department: employee.department || '',
+        position: employee.position || ''
+      });
+      setIsEditOpen(true);
+    } catch (e: any) {
+      // fallback to current user email/name
+      const nameParts = (user?.name || '').split(' ');
+      setProfileForm({
+        firstName: nameParts[0] || '',
+        lastName: nameParts.slice(1).join(' ') || '',
+        email: user?.email || '',
+        phone: '',
+        department: '',
+        position: ''
+      });
+      setIsEditOpen(true);
+    }
+  };
+
+  const saveProfile = async () => {
+    setSaveError('');
+    if (!profileForm.firstName || !profileForm.lastName || !profileForm.email || !profileForm.department || !profileForm.position) {
+      setSaveError('Please fill all required fields.');
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await api.put('/employees/user/me', profileForm);
+      // update local auth name/email
+      const updatedUser = { ...(user as any), name: `${profileForm.firstName} ${profileForm.lastName}`, email: profileForm.email };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      window.location.reload();
+    } catch (e: any) {
+      setSaveError(e?.response?.data?.message || 'Failed to update');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   // Calculate stats from real data
   const attendanceRate = attendance.length > 0 ?
@@ -238,7 +293,7 @@ const EmployeeDashboard: React.FC = () => {
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Tasks</h3>
                   <div className="space-y-3">
-                    {tasks.slice(0, 5).map((task: any, index) => (
+                    {tasks.slice(0, 5).map((task: any, index: number) => (
                       <div key={task._id || index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                         <div>
                           <p className="font-medium text-gray-900">{task.title}</p>
@@ -263,7 +318,7 @@ const EmployeeDashboard: React.FC = () => {
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Leave Requests</h3>
                   <div className="space-y-3">
-                    {leaves.slice(0, 3).map((leave: any, index) => (
+                    {leaves.slice(0, 3).map((leave: any, index: number) => (
                       <div key={leave._id || index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                         <div>
                           <p className="font-medium text-gray-900">{leave.leaveType}</p>
@@ -285,7 +340,7 @@ const EmployeeDashboard: React.FC = () => {
               <div className="space-y-6">
                 <h3 className="text-lg font-semibold text-gray-900">Attendance History</h3>
                 <div className="space-y-3">
-                  {attendance.slice(0, 10).map((record: any, index) => (
+                  {attendance.slice(0, 10).map((record: any, index: number) => (
                     <div key={record._id || index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                       <div>
                         <p className="font-medium text-gray-900">{new Date(record.date).toLocaleDateString()}</p>
@@ -315,7 +370,7 @@ const EmployeeDashboard: React.FC = () => {
               <div className="space-y-6">
                 <h3 className="text-lg font-semibold text-gray-900">My Tasks</h3>
                 <div className="space-y-3">
-                  {tasks.map((task: any, index) => (
+                  {tasks.map((task: any, index: number) => (
                     <div key={task._id || index} className="p-4 bg-gray-50 rounded-lg">
                       <div className="flex items-center justify-between mb-2">
                         <h4 className="font-medium text-gray-900">{task.title}</h4>
@@ -361,7 +416,7 @@ const EmployeeDashboard: React.FC = () => {
                   </button>
                 </div>
                 <div className="space-y-3">
-                  {leaves.map((leave: any, index) => (
+                  {leaves.map((leave: any, index: number) => (
                     <div key={leave._id || index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                       <div>
                                                  <p className="font-medium text-gray-900">{leave.leaveType}</p>
@@ -385,7 +440,7 @@ const EmployeeDashboard: React.FC = () => {
               <div className="space-y-6">
                 <h3 className="text-lg font-semibold text-gray-900">Payroll History</h3>
                 <div className="space-y-3">
-                  {payroll.map((record: any, index) => (
+                  {payroll.map((record: any, index: number) => (
                     <div key={record._id || index} className="p-4 bg-gray-50 rounded-lg">
                       <div className="flex items-center justify-between mb-2">
                         <h4 className="font-medium text-gray-900">
@@ -424,6 +479,15 @@ const EmployeeDashboard: React.FC = () => {
               <div className="space-y-6">
                 <h3 className="text-lg font-semibold text-gray-900">Profile Information</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <AvatarUploader
+                      userId={user.id}
+                      name={user.name}
+                      avatarUrl={user.avatarUrl as any}
+                      avatarUpdatedAt={user.avatarUpdatedAt as any}
+                      onUploaded={() => {}}
+                    />
+                  </div>
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Full Name</label>
@@ -449,13 +513,34 @@ const EmployeeDashboard: React.FC = () => {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Employee ID</label>
-                      <p className="mt-1 text-sm text-gray-900">{user.employeeId || 'EMP123456'}</p>
+                      <p className="mt-1 text-sm text-gray-900">{(user as any).employeeId || 'EMP123456'}</p>
                     </div>
                   </div>
                 </div>
-                <button className="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors">
+                <button onClick={openEdit} className="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors">
                   Edit Profile
                 </button>
+
+                {isEditOpen && (
+                  <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg shadow-xl w-full max-w-lg p-6">
+                      <h4 className="text-lg font-semibold mb-4">Edit Profile</h4>
+                      <div className="grid grid-cols-2 gap-3">
+                        <input className="border rounded px-2 py-1" placeholder="First Name" value={profileForm.firstName} onChange={e=>setProfileForm(f=>({...f, firstName:e.target.value}))} />
+                        <input className="border rounded px-2 py-1" placeholder="Last Name" value={profileForm.lastName} onChange={e=>setProfileForm(f=>({...f, lastName:e.target.value}))} />
+                        <input className="border rounded px-2 py-1 col-span-2" placeholder="Email" type="email" value={profileForm.email} onChange={e=>setProfileForm(f=>({...f, email:e.target.value}))} />
+                        <input className="border rounded px-2 py-1 col-span-2" placeholder="Phone (optional)" value={profileForm.phone} onChange={e=>setProfileForm(f=>({...f, phone:e.target.value}))} />
+                        <input className="border rounded px-2 py-1" placeholder="Department" value={profileForm.department} onChange={e=>setProfileForm(f=>({...f, department:e.target.value}))} />
+                        <input className="border rounded px-2 py-1" placeholder="Position" value={profileForm.position} onChange={e=>setProfileForm(f=>({...f, position:e.target.value}))} />
+                      </div>
+                      {saveError && <div className="text-red-600 text-sm mt-2">{saveError}</div>}
+                      <div className="mt-4 flex justify-end gap-2">
+                        <button onClick={()=>setIsEditOpen(false)} className="px-3 py-1 rounded border">Cancel</button>
+                        <button onClick={saveProfile} disabled={saving} className={`px-3 py-1 rounded text-white ${saving? 'bg-teal-400':'bg-teal-600 hover:bg-teal-700'}`}>{saving? 'Saving...':'Save'}</button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -465,9 +550,12 @@ const EmployeeDashboard: React.FC = () => {
                 <div className="space-y-3">
                   {directory.map((person, index) => (
                     <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                      <div>
-                        <p className="font-medium text-gray-900">{person.name}</p>
-                        <p className="text-sm text-gray-600">{person.role} • {person.dept}</p>
+                      <div className="flex items-center gap-2">
+                        <Avatar name={person.name} size={24} />
+                        <div>
+                          <p className="font-medium text-gray-900">{person.name}</p>
+                          <p className="text-sm text-gray-600">{person.role} • {person.dept}</p>
+                        </div>
                       </div>
                       <span className={`px-3 py-1 rounded-full text-xs font-medium ${
                         person.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'

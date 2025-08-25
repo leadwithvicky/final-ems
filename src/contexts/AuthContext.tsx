@@ -8,7 +8,8 @@ interface User {
   email: string;
   role: 'superadmin' | 'admin' | 'employee';
   mustChangePassword?: boolean;
-  avatar?: string;
+  avatarUrl?: string | null;
+  avatarUpdatedAt?: string | null;
   department?: string;
   position?: string;
 }
@@ -19,6 +20,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
   isLoading: boolean;
+  updateUser: (partial: Partial<User>) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -88,8 +90,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     window.location.href = '/login';
   };
 
+  const updateUser = (partial: Partial<User>) => {
+    setUser(prev => {
+      const next = { ...(prev as User), ...partial };
+      localStorage.setItem('user', JSON.stringify(next));
+      return next;
+    });
+  };
+
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, token, login, logout, isLoading, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

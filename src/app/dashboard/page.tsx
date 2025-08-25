@@ -1,9 +1,9 @@
 'use client';
 
 import { useAuth } from '@/contexts/AuthContext';
-import EmployeeDashboard from '@/components/Dashboard/EmployeeDashboard'; 
+import EmployeeDashboard from '@/components/dashboard/EmployeeDashboard'; 
 import AdminDashboard from '@/components/Dashboard/AdminDashboard';
-import SuperadminDashboard from '@/components/Dashboard/SuperadminDashboard';
+import SuperadminDashboard from '@/components/dashboard/SuperadminDashboard';
 import GlobalChat from '@/components/GlobalChat';
 
 export default function Dashboard() {

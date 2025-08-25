@@ -5,6 +5,8 @@ export interface IEmployee extends Document {
   firstName: string;
   lastName: string;
   email: string;
+  avatarUrl?: string | null;
+  avatarPublicId?: string | null;
   phone?: string;
   department: string;
   position: string;
@@ -57,6 +59,14 @@ const employeeSchema = new Schema<IEmployee>({
     required: [true, 'Email is required'],
     lowercase: true,
     trim: true
+  },
+  avatarUrl: {
+    type: String,
+    default: null
+  },
+  avatarPublicId: {
+    type: String,
+    default: null
   },
   phone: {
     type: String,

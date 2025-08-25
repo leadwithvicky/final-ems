@@ -52,7 +52,9 @@ export async function POST(request: NextRequest) {
         name: user.name,
         email: user.email,
         role: user.role,
-        mustChangePassword: user.mustChangePassword
+        mustChangePassword: user.mustChangePassword,
+        avatarUrl: user.avatarUrl || null,
+        avatarUpdatedAt: user.avatarUpdatedAt ? user.avatarUpdatedAt.toISOString() : null
       }
     });
 

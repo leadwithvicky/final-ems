@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatDistanceToNow } from 'date-fns';
+import Avatar from '@/components/Avatar';
 
 interface ChatMessage {
   _id: string;
@@ -234,8 +235,17 @@ export default function GlobalChat() {
                       : 'bg-white text-gray-800 rounded-tl-none border border-gray-200'
                   }`}>
                     {!isCurrentUser && showSender && (
-                      <div className={`text-xs font-semibold ${getRoleColor(msg.senderRole)}`}>
-                        {msg.senderName}
+                      <div className="flex items-center mb-1">
+                        <Avatar 
+                          src={(msg as any).senderId?.avatarUrl}
+                          updatedAt={(msg as any).senderId?.avatarUpdatedAt}
+                          name={msg.senderName}
+                          size={18}
+                          className="mr-2"
+                        />
+                        <div className={`text-xs font-semibold ${getRoleColor(msg.senderRole)}`}>
+                          {msg.senderName}
+                        </div>
                       </div>
                     )}
                     <div className="text-sm whitespace-pre-wrap break-words">{msg.message}</div>

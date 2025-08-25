@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import DepartmentEmployeesModal from '../dashboard/DepartmentEmployeesModal';
 import ReportLineChart from './ReportLineChart';
-import { Users, TrendingUp, DollarSign, Building, BarChart3, Shield, Settings, FileText, Calendar, UserPlus, Award } from 'lucide-react';
+import { Users, TrendingUp, DollarSign, Building, BarChart3, Shield, Settings, FileText, Calendar, UserPlus, Award, User as UserIcon } from 'lucide-react';
 
 import Layout from '../Layout';
 import Modal from '../Modal';
@@ -11,6 +11,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNotification } from '@/contexts/NotificationContext';
 import { employeeAPI, leaveAPI } from '@/lib/api';
 import AdminDashboard from './AdminDashboard';
+import AvatarUploader from '@/components/AvatarUploader';
 
 const SuperadminDashboard: React.FC = () => {
 
@@ -70,7 +71,7 @@ const SuperadminDashboard: React.FC = () => {
   // Admin stats (copied from AdminDashboard)
   const adminStats = [
     { label: 'Team Members', value: '156', change: '+8', icon: Users, color: 'from-orange-500 to-coral-500' },
-    { label: 'Pending Leaves', value: '12', change: '-2', icon: Calendar, color: 'from-teal-500 to-cyan-500' },
+    // { label: 'Pending Leaves', value: '12', change: '-2', icon: Calendar, color: 'from-teal-500 to-cyan-500' },
     { label: 'This Month Hires', value: '8', change: '+3', icon: UserPlus, color: 'from-lime-500 to-green-500' },
     { label: 'Average Rating', value: '4.7', change: '+0.2', icon: Award, color: 'from-red-500 to-orange-500' }
   ];
@@ -169,7 +170,8 @@ const SuperadminDashboard: React.FC = () => {
     { id: 'employees', label: 'Employee Management', icon: Users },
     { id: 'analytics', label: 'Analytics', icon: TrendingUp },
     { id: 'security', label: 'Security & Compliance', icon: Shield },
-    { id: 'settings', label: 'System Settings', icon: Settings }
+    { id: 'settings', label: 'System Settings', icon: Settings },
+    { id: 'profile', label: 'Profile', icon: UserIcon }
   ];
 
   if (!user) {
@@ -351,6 +353,37 @@ const SuperadminDashboard: React.FC = () => {
           />
         )}
 
+        {selectedTab === 'profile' && (
+          <div className="space-y-6">
+            <h3 className="text-lg font-semibold text-gray-900">Profile</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <AvatarUploader
+                  userId={user.id}
+                  name={user.name}
+                  avatarUrl={user.avatarUrl as any}
+                  avatarUpdatedAt={user.avatarUpdatedAt as any}
+                  onUploaded={() => {}}
+                />
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Full Name</label>
+                  <p className="mt-1 text-sm text-gray-900">{user.name}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Email</label>
+                  <p className="mt-1 text-sm text-gray-900">{user.email}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Role</label>
+                  <p className="mt-1 text-sm text-gray-900 capitalize">{user.role}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
   {/* Admin Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-4">
           {adminStats.map((stat, index) => (
@@ -379,7 +412,7 @@ const SuperadminDashboard: React.FC = () => {
         )}
 
         {/* Divider */}
-        <div className="my-8 border-t-2 border-dashed border-orange-300"></div>
+        <div className="my-8 border-t-2 border-dashed border-white"></div>
 
         {/* Admin Features Section */}
         <div>

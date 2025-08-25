@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Users, LogOut, User, MessageCircle, Globe } from 'lucide-react';
+import Avatar from '@/components/Avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -186,7 +187,7 @@ const Layout: React.FC<LayoutProps> = ({ title, children, user, onLogout }) => {
             </div>
             <div className="flex items-center space-x-4">
               <div className="flex items-center text-gray-700">
-                <User className="h-5 w-5 mr-2" />
+                <Avatar src={user.avatarUrl} updatedAt={user.avatarUpdatedAt} name={user.name} size={28} className="mr-2" />
                 <span>{user.name}</span>
                 <span className="ml-2 text-sm text-gray-500 capitalize">({user.role})</span>
               </div>
@@ -272,8 +273,17 @@ const Layout: React.FC<LayoutProps> = ({ title, children, user, onLogout }) => {
                         ${isCurrentUser ? 'rounded-tr-none' : 'rounded-tl-none'}`}
                       >
                         {!isCurrentUser && showSenderName && (
-                          <div className={`text-xs mb-1 ${getRoleColor(msg.senderRole)}`}>
-                            {msg.senderName}
+                          <div className="flex items-center mb-1">
+                            <Avatar 
+                              src={(msg as any).senderId?.avatarUrl}
+                              updatedAt={(msg as any).senderId?.avatarUpdatedAt}
+                              name={msg.senderName}
+                              size={18}
+                              className="mr-2"
+                            />
+                            <div className={`text-xs ${getRoleColor(msg.senderRole).replace('font-bold','font-semibold')}`}>
+                              {msg.senderName}
+                            </div>
                           </div>
                         )}
                         <div className="whitespace-pre-wrap break-words text-sm">

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth';
 import dbConnect from '@/lib/db';
 import ChatMessage from '@/lib/models/ChatMessage';
+import { isRedisConfigured, redisGetJson, redisSetJson, redisDel } from '@/lib/redis';
 import User from '@/lib/models/User';
 
 export async function GET(req: NextRequest) {
@@ -30,12 +31,24 @@ export async function GET(req: NextRequest) {
       query.timestamp = { $lt: new Date(before) };
     }
 
+    const cacheKey = isRedisConfigured() ? `chat:messages:${limit}:${before || 'latest'}` : null;
+    if (cacheKey) {
+      const cached = await redisGetJson<any[]>(cacheKey);
+      if (cached) {
+        return NextResponse.json({ messages: cached });
+      }
+    }
+
     const messages = await ChatMessage.find(query)
       .sort({ timestamp: -1 })
       .limit(limit)
-      .populate('senderId', 'name role');
+      .populate('senderId', 'name role avatarUrl avatarUpdatedAt');
 
-    return NextResponse.json({ messages: messages.reverse() });
+    const result = messages.reverse();
+    if (cacheKey) {
+      await redisSetJson(cacheKey, result, 2); // short TTL to reduce load while polling
+    }
+    return NextResponse.json({ messages: result });
   } catch (error) {
     console.error('Error fetching messages:', error);
     return NextResponse.json({ error: 'Failed to fetch messages' }, { status: 500 });
@@ -82,8 +95,12 @@ export async function POST(req: NextRequest) {
     });
 
     await chatMessage.save();
-    await chatMessage.populate('senderId', 'name role'); // ✅ Ensure senderId is populated
-
+    await chatMessage.populate('senderId', 'name role avatarUrl avatarUpdatedAt'); // ✅ Ensure senderId is populated
+    // Invalidate caches
+    if (isRedisConfigured()) {
+      await redisDel('chat:messages:50:latest');
+      await redisDel('chat:messages:100:latest');
+    }
     return NextResponse.json({ message: chatMessage });
   } catch (error) {
     console.error('Error sending message:', error);

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Avatar from '@/components/Avatar';
 import useSWR from 'swr';
 import { attendanceAPI, employeeAPI } from '@/lib/api';
 import { Clock } from 'lucide-react';
@@ -86,7 +87,12 @@ const AttendanceAdminView: React.FC = () => {
             ) : (
               attendance.map((record: any) => (
                 <tr key={record._id}>
-                  <td className="px-3 py-2 border-b">{record.employeeId?.firstName} {record.employeeId?.lastName}</td>
+                  <td className="px-3 py-2 border-b">
+                    <div className="flex items-center gap-2">
+                      <Avatar name={`${record.employeeId?.firstName || ''} ${record.employeeId?.lastName || ''}`} size={20} />
+                      <span>{record.employeeId?.firstName} {record.employeeId?.lastName}</span>
+                    </div>
+                  </td>
                   <td className="px-3 py-2 border-b">{record.employeeId?.department}</td>
                   <td className="px-3 py-2 border-b">{new Date(record.date).toLocaleDateString()}</td>
                   <td className="px-3 py-2 border-b">{record.clockIn ? new Date(record.clockIn).toLocaleTimeString() : '-'}</td>
