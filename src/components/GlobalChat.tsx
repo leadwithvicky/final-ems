@@ -31,6 +31,18 @@ export default function GlobalChat() {
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const lastMessageCountRef = useRef<number>(0);
 
+  const startPolling = () => {
+    if (pollIntervalRef.current) return;
+    pollIntervalRef.current = setInterval(fetchMessages, 3000);
+  };
+
+  const stopPolling = () => {
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current);
+      pollIntervalRef.current = null;
+    }
+  };
+
   const fetchMessages = async () => {
     if (!token || !user) return; // ensure token and user exist
     
@@ -121,14 +133,27 @@ export default function GlobalChat() {
   };
 
   useEffect(() => {
-    // Always fetch messages periodically, even when chat is closed
-    fetchMessages();
-    pollIntervalRef.current = setInterval(fetchMessages, 3000);
-    
-    return () => {
-      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+    if (!token || !user) return;
+    if (isOpen) {
+      fetchMessages();
+      startPolling();
+    } else {
+      stopPolling();
+    }
+    return () => stopPolling();
+  }, [token, user, isOpen]);
+
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.hidden) {
+        stopPolling();
+      } else if (isOpen) {
+        startPolling();
+      }
     };
-  }, [token, user]);
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen && messagesEndRef.current) {

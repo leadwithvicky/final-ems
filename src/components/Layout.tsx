@@ -39,6 +39,18 @@ const Layout: React.FC<LayoutProps> = ({ title, children, user, onLogout }) => {
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const lastMessageCountRef = useRef<number>(0);
 
+  const startPolling = () => {
+    if (pollIntervalRef.current) return;
+    pollIntervalRef.current = setInterval(fetchMessages, 3000);
+  };
+
+  const stopPolling = () => {
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current);
+      pollIntervalRef.current = null;
+    }
+  };
+
   const fetchMessages = async () => {
     if (!token || !user) return;
     
@@ -126,14 +138,27 @@ const Layout: React.FC<LayoutProps> = ({ title, children, user, onLogout }) => {
   };
 
   useEffect(() => {
-    // Always fetch messages periodically, even when chat is closed
-    fetchMessages();
-    pollIntervalRef.current = setInterval(fetchMessages, 3000);
-    
-    return () => {
-      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+    if (!token || !user) return;
+    if (isChatOpen) {
+      fetchMessages();
+      startPolling();
+    } else {
+      stopPolling();
+    }
+    return () => stopPolling();
+  }, [token, user, isChatOpen]);
+
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.hidden) {
+        stopPolling();
+      } else if (isChatOpen) {
+        startPolling();
+      }
     };
-  }, [token, user]);
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, [isChatOpen]);
 
   useEffect(() => {
     if (isChatOpen && messagesEndRef.current) {
