@@ -8,8 +8,10 @@ import Avatar from '@/components/Avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNotification } from '@/contexts/NotificationContext';
 import useSWR from 'swr';
-import { attendanceAPI } from '@/lib/api';
+import { attendanceAPI, leaveAPI } from '@/lib/api';
 import api from '@/lib/api';
+import Modal from '../Modal';
+import toast from 'react-hot-toast';
 
 const fetcher = async (url: string, token: string) => {
   const res = await fetch(url, {
@@ -25,6 +27,9 @@ const EmployeeDashboard: React.FC = () => {
   const [selectedTab, setSelectedTab] = useState('overview');
   const [showPayslipModal, setShowPayslipModal] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [showRequestLeaveModal, setShowRequestLeaveModal] = useState(false);
+  const [leaveForm, setLeaveForm] = useState({ type: 'annual', startDate: '', endDate: '', reason: '' });
+  const [requestingLeave, setRequestingLeave] = useState(false);
   const [profileForm, setProfileForm] = useState({ firstName: '', lastName: '', email: '', phone: '', department: '', position: '' });
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
@@ -37,6 +42,7 @@ const EmployeeDashboard: React.FC = () => {
   const { data: tasks = [], error: tasksError, isLoading: tasksLoading, mutate: mutateTasks } = useSWR(token ? ['/api/tasks', token] : null, ([url, t]) => fetcher(url, t));
   const { data: payroll = [], error: payrollError, isLoading: payrollLoading } = useSWR(token ? ['/api/payroll', token] : null, ([url, t]) => fetcher(url, t));
   const { data: leaves = [], error: leavesError, isLoading: leavesLoading, mutate: mutateLeaves } = useSWR(token ? ['/api/leaves/my-leaves', token] : null, ([url, t]) => fetcher(url, t));
+  const { data: myProfile, isLoading: profileLoading } = useSWR(token ? ['/api/employees/user/me', token] : null, ([url, t]) => fetcher(url, t));
 
   const openEdit = async () => {
     try {
@@ -101,8 +107,16 @@ const EmployeeDashboard: React.FC = () => {
     return recordDate.toDateString() === today.toDateString();
   });
 
+  const remainingLeaves = (() => {
+    const emp = (myProfile as any)?.employee;
+    if (!emp) return undefined;
+    const total = Number(emp.totalLeaves || 0);
+    const used = Number(emp.usedLeaves || 0);
+    return Math.max(total - used, 0);
+  })();
+
   const stats = [
-    { label: 'Leave Balance', value: '12 days', icon: Calendar, color: 'from-teal-500 to-cyan-500' },
+    { label: 'Leave Balance', value: `${remainingLeaves ?? 0} days`, icon: Calendar, color: 'from-teal-500 to-cyan-500' },
     { label: 'Attendance', value: `${attendanceRate}%`, icon: Clock, color: 'from-orange-500 to-coral-500' },
     { label: 'Task Completion', value: `${taskCompletionRate}%`, icon: Award, color: 'from-lime-500 to-green-500' },
     { label: 'Department', value: user?.department || 'Engineering', icon: Users, color: 'from-red-500 to-orange-500' }
@@ -188,7 +202,7 @@ const EmployeeDashboard: React.FC = () => {
     return null;
   }
 
-  if (attendanceLoading || tasksLoading || payrollLoading || leavesLoading) {
+  if (attendanceLoading || tasksLoading || payrollLoading || leavesLoading || profileLoading) {
     return (
       <Layout title="Employee Dashboard" user={user} onLogout={logout}>
         <div className="flex items-center justify-center h-64">
@@ -411,7 +425,7 @@ const EmployeeDashboard: React.FC = () => {
               <div className="space-y-6">
                 <div className="flex justify-between items-center">
                   <h3 className="text-lg font-semibold text-gray-900">Leave Management</h3>
-                  <button className="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors">
+                  <button onClick={() => setShowRequestLeaveModal(true)} className="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors">
                     Request Leave
                   </button>
                 </div>
@@ -433,6 +447,92 @@ const EmployeeDashboard: React.FC = () => {
                     </div>
                   ))}
                 </div>
+                <Modal isOpen={showRequestLeaveModal} onClose={() => setShowRequestLeaveModal(false)} title="Request Leave">
+                  <form
+                    className="flex flex-col gap-3"
+                    onSubmit={async e => {
+                      e.preventDefault();
+                      setRequestingLeave(true);
+                      try {
+                        if (!leaveForm.type || !leaveForm.startDate || !leaveForm.endDate || !leaveForm.reason) {
+                          toast.error('Please fill all required fields.');
+                          setRequestingLeave(false);
+                          return;
+                        }
+                        await leaveAPI.create({
+                          type: leaveForm.type,
+                          startDate: new Date(leaveForm.startDate),
+                          endDate: new Date(leaveForm.endDate),
+                          reason: leaveForm.reason,
+                        });
+                        toast.success('Leave request submitted.');
+                        setShowRequestLeaveModal(false);
+                        setLeaveForm({ type: 'annual', startDate: '', endDate: '', reason: '' });
+                        mutateLeaves();
+                      } catch (err: any) {
+                        toast.error(err?.response?.data?.message || 'Failed to submit leave request');
+                      } finally {
+                        setRequestingLeave(false);
+                      }
+                    }}
+                  >
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-sm text-gray-700 mb-1">Leave Type</label>
+                        <select
+                          className="border rounded px-2 py-1 w-full"
+                          value={leaveForm.type}
+                          onChange={e => setLeaveForm(f => ({ ...f, type: e.target.value }))}
+                          required
+                        >
+                          <option value="annual">Annual</option>
+                          <option value="sick">Sick</option>
+                          <option value="personal">Personal</option>
+                          <option value="maternity">Maternity</option>
+                          <option value="paternity">Paternity</option>
+                          <option value="emergency">Emergency</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-700 mb-1">Start Date</label>
+                        <input
+                          type="date"
+                          className="border rounded px-2 py-1 w-full"
+                          value={leaveForm.startDate}
+                          onChange={e => setLeaveForm(f => ({ ...f, startDate: e.target.value }))}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-700 mb-1">End Date</label>
+                        <input
+                          type="date"
+                          className="border rounded px-2 py-1 w-full"
+                          value={leaveForm.endDate}
+                          onChange={e => setLeaveForm(f => ({ ...f, endDate: e.target.value }))}
+                          required
+                        />
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="block text-sm text-gray-700 mb-1">Reason</label>
+                        <textarea
+                          className="border rounded px-2 py-1 w-full"
+                          rows={4}
+                          placeholder="Provide sufficient details for approval"
+                          value={leaveForm.reason}
+                          onChange={e => setLeaveForm(f => ({ ...f, reason: e.target.value }))}
+                          required
+                          maxLength={500}
+                        />
+                        <p className="text-xs text-gray-500 mt-1">Max 500 characters.</p>
+                      </div>
+                    </div>
+                    <div className="mt-4 flex justify-end gap-2">
+                      <button type="button" onClick={() => setShowRequestLeaveModal(false)} className="px-3 py-1 rounded border">Cancel</button>
+                      <button type="submit" disabled={requestingLeave} className={`px-3 py-1 rounded text-white ${requestingLeave ? 'bg-teal-400' : 'bg-teal-600 hover:bg-teal-700'}`}>{requestingLeave ? 'Submitting...' : 'Submit Request'}</button>
+                    </div>
+                  </form>
+                </Modal>
               </div>
             )}
 

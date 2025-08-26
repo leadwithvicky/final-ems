@@ -63,8 +63,8 @@ export const leaveAPI = {
   create: (leaveData: any) => api.post('/leaves', leaveData),
   update: (id: string, leaveData: any) => api.put(`/leaves/${id}`, leaveData),
   delete: (id: string) => api.delete(`/leaves/${id}`),
-  approve: (id: string, status: string, comments?: string) =>
-    api.put(`/leaves/${id}/approve`, { status, comments }),
+  approve: (id: string) => api.post(`/leaves/${id}/approve`, {}),
+  reject: (id: string) => api.post(`/leaves/${id}/reject`, {}),
   getStats: () => api.get('/leaves/stats'),
 };
 

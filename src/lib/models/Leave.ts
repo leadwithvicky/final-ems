@@ -37,7 +37,8 @@ const leaveSchema = new Schema<ILeave>({
   },
   days: {
     type: Number,
-    required: [true, 'Number of days is required'],
+    // Computed in pre('validate')
+    required: false,
     min: 0.5
   },
   reason: {
@@ -69,17 +70,12 @@ const leaveSchema = new Schema<ILeave>({
   timestamps: true
 });
 
-// Validate that end date is after start date
-leaveSchema.pre('save', function(next) {
-  if (this.endDate < this.startDate) {
-    return next(new Error('End date must be after start date'));
-  }
-  next();
-});
-
-// Calculate days automatically
-leaveSchema.pre('save', function(next) {
+// Validate and calculate fields before validation runs
+leaveSchema.pre('validate', function(next) {
   if (this.startDate && this.endDate) {
+    if (this.endDate < this.startDate) {
+      return next(new Error('End date must be after start date'));
+    }
     const diffTime = Math.abs(this.endDate.getTime() - this.startDate.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
     this.days = diffDays;

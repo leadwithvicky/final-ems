@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
 import Leave from '@/lib/models/Leave';
+import Employee from '@/lib/models/Employee';
 import { verifyToken } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
@@ -22,7 +23,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 403 });
     }
 
-    const leaves = await Leave.find({ employee: decoded.id })
+    const employeeDoc = await Employee.findOne({ user: decoded.id });
+    if (!employeeDoc) {
+      return NextResponse.json([], { status: 200 });
+    }
+
+    const leaves = await Leave.find({ employee: employeeDoc._id })
       .populate('employee', 'name email')
       .sort({ createdAt: -1 });
 

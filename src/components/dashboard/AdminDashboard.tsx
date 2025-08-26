@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import useSWR from 'swr';
-import { attendanceAPI } from '@/lib/api';
+import { attendanceAPI, leaveAPI } from '@/lib/api';
 import { useNotification } from '@/contexts/NotificationContext';
 import AttendanceAdminView from './AttendanceAdminView';
 import Modal from '../Modal';
@@ -93,25 +93,28 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ hideHeader = false }) =
     { action: 'Training session scheduled', person: 'Team Development', time: '8 hours ago' }
   ];
 
-  // Approve leave using new API endpoint
+  // SWR for leaves
+  const { data: leaves = [], isLoading: leavesLoading, mutate: mutateLeaves } = useSWR(token ? ['/api/leaves', token] : null, ([url, t]) => fetch(url, { headers: { Authorization: `Bearer ${t}` } }).then(res => res.json()));
+
+  // Approve leave using API endpoint
   const handleApproveLeave = async (leaveId: string, name: string) => {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) throw new Error('No token found. Please login again.');
-      await axios.post(
-        `/api/leaves/${leaveId}/approve`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await leaveAPI.approve(leaveId);
       toast.success(`${name}'s leave request has been approved and leave balance updated.`);
-      // Optionally, refresh leave data here
+      mutateLeaves();
     } catch (err: any) {
       toast.error(err?.response?.data?.message || err.message || 'Failed to approve leave');
     }
   };
 
-  const handleRejectLeave = (name: string) => {
-    toast.error(`${name}'s leave request has been rejected.`);
+  const handleRejectLeave = async (leaveId: string, name: string) => {
+    try {
+      await leaveAPI.reject(leaveId);
+      toast.success(`${name}'s leave request has been rejected.`);
+      mutateLeaves();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err.message || 'Failed to reject leave');
+    }
   };
 
   const handleAddEmployee = async () => {
@@ -399,23 +402,22 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ hideHeader = false }) =
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Pending Leave Requests</h3>
                 <div className="space-y-3">
-                  {/* Replace with real leave data from backend */}
-                  {Array.isArray(leaveRequests) && leaveRequests.filter(leave => leave.status === 'pending').map((leave, index) => (
-                    <div key={leave._id || index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  {Array.isArray(leaves) && leaves.filter((l: any) => l.status === 'pending').map((leave: any) => (
+                    <div key={leave._id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                       <div className="flex items-center gap-2">
-                        <Avatar name={leave.name || 'Employee'} size={24} />
-                        <p className="font-medium text-gray-900">{leave.name || 'Employee'}</p>
-                        <p className="text-sm text-gray-600">{leave.type} • {leave.dates} • {leave.duration} days</p>
+                        <Avatar name={leave.employee?.name || 'Employee'} size={24} />
+                        <p className="font-medium text-gray-900">{leave.employee?.name || 'Employee'}</p>
+                        <p className="text-sm text-gray-600">{leave.leaveType} • {new Date(leave.startDate).toLocaleDateString()} - {new Date(leave.endDate).toLocaleDateString()} • {leave.days} days</p>
                       </div>
                       <div className="flex space-x-2">
                         <button
-                          onClick={() => handleApproveLeave(leave._id, leave.name || 'Employee')}
+                          onClick={() => handleApproveLeave(leave._id, leave.employee?.name || 'Employee')}
                           className="px-3 py-1 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700"
                         >
                           Approve
                         </button>
                         <button
-                          onClick={() => handleRejectLeave(leave.name || 'Employee')}
+                          onClick={() => handleRejectLeave(leave._id, leave.employee?.name || 'Employee')}
                           className="px-3 py-1 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700"
                         >
                           Reject
@@ -468,11 +470,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ hideHeader = false }) =
             <div className="space-y-6">
               <h3 className="text-lg font-semibold text-gray-900">Leave Management</h3>
               <div className="space-y-3">
-                {Array.isArray(leaveRequests) && leaveRequests.map((leave, index) => (
-                  <div key={leave._id || index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                {Array.isArray(leaves) && leaves.map((leave: any) => (
+                  <div key={leave._id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                     <div>
-                      <p className="font-medium text-gray-900">{leave.employee?.name || leave.name || 'Employee'}</p>
-                      <p className="text-sm text-gray-600">{leave.leaveType || leave.type} • {leave.startDate || leave.dates} - {leave.endDate || ''} • {leave.days || leave.duration} days</p>
+                      <p className="font-medium text-gray-900">{leave.employee?.name || 'Employee'}</p>
+                      <p className="text-sm text-gray-600">{leave.leaveType} • {new Date(leave.startDate).toLocaleDateString()} - {new Date(leave.endDate).toLocaleDateString()} • {leave.days} days</p>
+                      {leave.reason && <p className="text-xs text-gray-500">Reason: {leave.reason}</p>}
                     </div>
                     <div className="flex items-center space-x-3">
                       <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(leave.status)}`}>
@@ -481,13 +484,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ hideHeader = false }) =
                       {leave.status === 'pending' && (
                         <div className="flex space-x-2">
                           <button
-                            onClick={() => handleApproveLeave(leave._id, leave.employee?.name || leave.name || 'Employee')}
+                            onClick={() => handleApproveLeave(leave._id, leave.employee?.name || 'Employee')}
                             className="px-3 py-1 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700"
                           >
                             Approve
                           </button>
                           <button
-                            onClick={() => handleRejectLeave(leave.employee?.name || leave.name || 'Employee')}
+                            onClick={() => handleRejectLeave(leave._id, leave.employee?.name || 'Employee')}
                             className="px-3 py-1 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700"
                           >
                             Reject
