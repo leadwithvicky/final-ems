@@ -22,11 +22,15 @@ export interface IPayroll extends Document {
   totalEarnings: number;
   totalDeductions: number;
   netSalary: number;
-  status: 'pending' | 'processed' | 'paid';
+  status: 'pending' | 'processed' | 'paid' | 'finalized';
   paymentDate?: Date;
   payslipUrl?: string;
   notes?: string;
   processedBy: mongoose.Types.ObjectId;
+  // Audit fields
+  recomputedBy?: mongoose.Types.ObjectId;
+  recomputedAt?: Date;
+  recomputeReason?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -86,7 +90,7 @@ const payrollSchema = new Schema<IPayroll>({
   },
   status: {
     type: String,
-    enum: ['pending', 'processed', 'paid'],
+    enum: ['pending', 'processed', 'paid', 'finalized'],
     default: 'pending'
   },
   paymentDate: {
@@ -102,6 +106,18 @@ const payrollSchema = new Schema<IPayroll>({
     type: Schema.Types.ObjectId,
     ref: 'Employee',
     required: true
+  },
+  // Audit fields for recompute tracking
+  recomputedBy: {
+    type: Schema.Types.ObjectId,
+    ref: 'Employee'
+  },
+  recomputedAt: {
+    type: Date
+  },
+  recomputeReason: {
+    type: String,
+    maxlength: 500
   }
 }, {
   timestamps: true
@@ -131,4 +147,8 @@ payrollSchema.pre('validate', function(next) {
   next();
 });
 
-export default mongoose.models.Payroll || mongoose.model<IPayroll>('Payroll', payrollSchema);
+// In dev, Next can hot-reload without process restart; ensure latest schema hooks apply
+if (mongoose.models.Payroll) {
+  delete mongoose.models.Payroll;
+}
+export default mongoose.model<IPayroll>('Payroll', payrollSchema);

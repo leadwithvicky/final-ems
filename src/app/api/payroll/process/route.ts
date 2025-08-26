@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 403 });
     }
 
-    const { month, year, employeeId, notes } = await request.json();
+    const { month, year, employeeId, notes, recompute, recomputeReason, bonus, allowances: overrides } = await request.json();
     if (!month || !year) {
       return NextResponse.json({ message: 'month and year are required' }, { status: 400 });
     }
@@ -36,72 +36,128 @@ export async function POST(request: NextRequest) {
     const employees = await Employee.find(employeeQuery);
 
     const results: any[] = [];
+    const blockedRecomputes: any[] = [];
 
     for (const emp of employees) {
-      // Skip if payroll exists
-      const exists = await Payroll.findOne({ employeeId: emp._id, month, year });
-      if (exists) {
-        results.push({ employeeId: emp._id, status: 'exists' });
-        continue;
+      try {
+        // Handle existing payroll
+        const existing = await Payroll.findOne({ employeeId: emp._id, month, year });
+        
+        if (existing) {
+          // Check if recompute is allowed based on status
+          if (recompute) {
+            if (existing.status === 'finalized' || existing.status === 'paid') {
+              // Only superadmin can recompute finalized/paid payroll
+              if (decoded.role !== 'superadmin') {
+                blockedRecomputes.push({
+                  employeeId: emp._id,
+                  employeeName: emp.name,
+                  status: existing.status,
+                  reason: `Cannot recompute ${existing.status} payroll. Only superadmin can override.`
+                });
+                continue;
+              }
+            }
+            
+            // Log the recompute action
+            existing.recomputedBy = decoded.id as any;
+            existing.recomputedAt = new Date();
+            existing.recomputeReason = recomputeReason || 'Manual recompute';
+          } else {
+            results.push({ employeeId: emp._id, status: 'exists', message: 'Payroll already exists for this month' });
+            continue;
+          }
+        }
+
+        // Attendance aggregation
+        const attendanceRecords = await Attendance.find({
+          employeeId: emp._id,
+          date: { $gte: start, $lte: end }
+        });
+
+        const totalHours = attendanceRecords.reduce((sum, r: any) => sum + (r.totalHours || 0), 0);
+        const standardMonthlyHours = 8 * 22; // 22 working days baseline
+        const overtimeHours = Math.max(totalHours - standardMonthlyHours, 0);
+        const overtimeRatePerHour = (emp.salary / standardMonthlyHours) * 1.25; // 25% uplift
+        const overtimeAmount = Math.round(overtimeHours * overtimeRatePerHour);
+
+        // Paid/Unpaid leave mapping
+        const approvedLeaves = await Leave.find({
+          employee: emp._id,
+          status: 'approved',
+          startDate: { $lte: end },
+          endDate: { $gte: start }
+        });
+        const paidTypes = new Set(['annual','sick','maternity','paternity']);
+        const unpaidLeaveDays = approvedLeaves
+          .filter((l: any) => !paidTypes.has(l.leaveType))
+          .reduce((sum: number, l: any) => sum + (l.days || 0), 0);
+        const perDayRate = emp.salary / 22; // simple pro-rata
+        const unpaidLeaveDeduction = Math.round(unpaidLeaveDays * perDayRate);
+
+        // Tax slabs
+        const monthly = emp.salary;
+        let taxRate = 0;
+        if (monthly <= 25000) taxRate = 0;
+        else if (monthly <= 50000) taxRate = 0.05;
+        else if (monthly <= 100000) taxRate = 0.10;
+        else taxRate = 0.15;
+        const tax = Math.round(monthly * taxRate);
+
+        // Apply admin overrides if provided
+        const allowances = {
+          housing: Math.max(0, Math.round(overrides?.housing ?? 0)),
+          transport: Math.max(0, Math.round(overrides?.transport ?? 0)),
+          meal: Math.max(0, Math.round(overrides?.meal ?? 0)),
+          other: Math.max(0, Math.round(overrides?.other ?? 0))
+        };
+        const deductions = { tax, insurance: 0, pension: 0, other: unpaidLeaveDeduction };
+        const bonusAmount = Math.max(0, Math.round(bonus ?? 0));
+
+        if (existing && recompute) {
+          existing.basicSalary = emp.salary;
+          existing.allowances = allowances as any;
+          existing.deductions = deductions as any;
+          existing.overtime = overtimeAmount;
+          existing.bonus = bonusAmount;
+          existing.notes = notes || undefined;
+          existing.status = 'processed'; // Reset to processed when recomputed
+          existing.processedBy = decoded.id as any;
+          await existing.save();
+          results.push({ 
+            employeeId: emp._id, 
+            status: 'recomputed',
+            message: `Payroll recomputed by ${decoded.role}${recomputeReason ? ` - ${recomputeReason}` : ''}`
+          });
+          continue;
+        }
+
+        const payroll = new Payroll({
+          employeeId: emp._id,
+          month,
+          year,
+          basicSalary: emp.salary,
+          allowances,
+          deductions,
+          overtime: overtimeAmount,
+          bonus: bonusAmount,
+          notes: notes || undefined,
+          processedBy: decoded.id,
+          status: 'processed'
+        });
+
+        await payroll.save();
+        results.push({ employeeId: emp._id, status: 'created' });
+      } catch (e: any) {
+        results.push({ employeeId: emp._id, status: 'error', error: e?.message || 'Unknown error' });
       }
-
-      // Attendance aggregation
-      const attendanceRecords = await Attendance.find({
-        employeeId: emp._id,
-        date: { $gte: start, $lte: end }
-      });
-
-      const totalHours = attendanceRecords.reduce((sum, r: any) => sum + (r.totalHours || 0), 0);
-      const standardMonthlyHours = 8 * 22; // 22 working days baseline
-      const overtimeHours = Math.max(totalHours - standardMonthlyHours, 0);
-      const overtimeRatePerHour = (emp.salary / standardMonthlyHours) * 1.25; // 25% uplift
-      const overtimeAmount = Math.round(overtimeHours * overtimeRatePerHour);
-
-      // Paid/Unpaid leave mapping: mark 'annual','sick','maternity','paternity' as paid; 'personal','emergency' as unpaid example
-      const approvedLeaves = await Leave.find({
-        employee: emp._id,
-        status: 'approved',
-        startDate: { $lte: end },
-        endDate: { $gte: start }
-      });
-      const paidTypes = new Set(['annual','sick','maternity','paternity']);
-      const unpaidLeaveDays = approvedLeaves
-        .filter((l: any) => !paidTypes.has(l.leaveType))
-        .reduce((sum: number, l: any) => sum + (l.days || 0), 0);
-      const perDayRate = emp.salary / 22; // simple pro-rata
-      const unpaidLeaveDeduction = Math.round(unpaidLeaveDays * perDayRate);
-
-      // Tax slabs (example): <=25k: 0%, <=50k: 5%, <=100k: 10%, >100k: 15%
-      const monthly = emp.salary;
-      let taxRate = 0;
-      if (monthly <= 25000) taxRate = 0;
-      else if (monthly <= 50000) taxRate = 0.05;
-      else if (monthly <= 100000) taxRate = 0.10;
-      else taxRate = 0.15;
-      const tax = Math.round(monthly * taxRate);
-
-      const allowances = { housing: 0, transport: 0, meal: 0, other: 0 };
-      const deductions = { tax, insurance: 0, pension: 0, other: unpaidLeaveDeduction };
-
-      const payroll = new Payroll({
-        employeeId: emp._id,
-        month,
-        year,
-        basicSalary: emp.salary,
-        allowances,
-        deductions,
-        overtime: overtimeAmount,
-        bonus: 0,
-        notes: notes || undefined,
-        processedBy: decoded.id,
-        status: 'processed'
-      });
-
-      await payroll.save();
-      results.push({ employeeId: emp._id, status: 'created' });
     }
 
-    return NextResponse.json({ message: 'Payroll processed', results });
+    return NextResponse.json({ 
+      message: 'Payroll processed', 
+      results,
+      blockedRecomputes: blockedRecomputes.length > 0 ? blockedRecomputes : undefined
+    });
   } catch (error) {
     console.error('Error processing payroll:', error);
     return NextResponse.json({ message: 'Internal server error' }, { status: 500 });

@@ -55,6 +55,12 @@ export const employeeAPI = {
   getByDepartment: (department: string) => api.get(`/employees/department/${department}`),
 };
 
+// Department API
+export const departmentAPI = {
+  getAll: () => api.get('/departments'),
+  getEmployees: (department: string) => api.get(`/departments/${department}/employees`),
+};
+
 // Leave API
 export const leaveAPI = {
   getAll: () => api.get('/leaves'),
@@ -82,9 +88,19 @@ export const payrollAPI = {
   getAll: (params?: any) => api.get('/payroll', { params }),
   getMyPayroll: () => api.get('/payroll'),
   create: (payrollData: any) => api.post('/payroll', payrollData),
-  process: (payload: { month: number; year: number; employeeId?: string; notes?: string }) => api.post('/payroll/process', payload),
+  process: (payload: { 
+    month: number; 
+    year: number; 
+    employeeId?: string; 
+    notes?: string; 
+    recompute?: boolean;
+    recomputeReason?: string;
+    bonus?: number;
+    allowances?: { housing?: number; transport?: number; meal?: number; other?: number };
+  }) => api.post('/payroll/process', payload),
   stats: (params?: { month?: number; year?: number }) => api.get('/payroll/stats', { params }),
   markPaid: (id: string) => api.put(`/payroll/${id}/pay`),
+  finalize: (id: string, notes?: string) => api.put(`/payroll/${id}/finalize`, notes ? { notes } : {}),
   downloadPayslip: (id: string) => api.get(`/payroll/${id}/payslip`),
   exportCsv: async (params: any = {}) => {
     const res = await api.get('/payroll', { params: { ...params, format: 'csv' }, responseType: 'blob' });
