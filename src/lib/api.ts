@@ -101,6 +101,7 @@ export const payrollAPI = {
   stats: (params?: { month?: number; year?: number }) => api.get('/payroll/stats', { params }),
   markPaid: (id: string) => api.put(`/payroll/${id}/pay`),
   finalize: (id: string, notes?: string) => api.put(`/payroll/${id}/finalize`, notes ? { notes } : {}),
+  adjust: (id: string, payload: any) => api.put(`/payroll/${id}/adjust`, payload),
   downloadPayslip: (id: string) => api.get(`/payroll/${id}/payslip`),
   downloadPayslipPdf: async (id: string) => {
     const res = await api.get(`/payroll/${id}/payslip/pdf`, { responseType: 'blob' });

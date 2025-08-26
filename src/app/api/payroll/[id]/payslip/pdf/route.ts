@@ -80,13 +80,21 @@ export async function GET(
       .populate('employeeId', 'firstName lastName email department position user')
       .lean();
 
-    if (!payroll) return NextResponse.json({ message: 'Payroll not found' }, { status: 404 });
+    if (!payroll) {
+      return NextResponse.json({ message: 'Payroll not found' }, { status: 404 });
+    }
 
-    const { default: PDFDocument } = await import('pdfkit');
+    // Dynamically import PDFKit and handle possible import errors
+    let PDFDocument;
+    try {
+      PDFDocument = (await import('pdfkit')).default;
+    } catch (err) {
+      return NextResponse.json({ message: 'Failed to load PDFKit' }, { status: 500 });
+    }
 
     const doc = new PDFDocument({ size: 'A4', margin: 40 });
     const chunks: Buffer[] = [];
-    doc.on('data', (d: any) => chunks.push(Buffer.from(d)));
+    doc.on('data', (d: Buffer) => chunks.push(Buffer.from(d)));
     const pdfPromise = new Promise<Buffer>((resolve) => {
       doc.on('end', () => resolve(Buffer.concat(chunks)));
     });

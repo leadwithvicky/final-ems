@@ -37,6 +37,11 @@ const PayrollAdminPanel: React.FC = () => {
   const [stats, setStats] = React.useState<any>(null);
   const [list, setList] = React.useState<any[]>([]);
   const [blockedRecomputes, setBlockedRecomputes] = React.useState<any[]>([]);
+  const [adjusting, setAdjusting] = React.useState<any | null>(null);
+  const [adjBonus, setAdjBonus] = React.useState<number>(0);
+  const [adjAllow, setAdjAllow] = React.useState<{housing:number;transport:number;meal:number;other:number}>({ housing: 0, transport: 0, meal: 0, other: 0 });
+  const [adjDed, setAdjDed] = React.useState<{tax:number;insurance:number;pension:number;other:number}>({ tax: 0, insurance: 0, pension: 0, other: 0 });
+  const [adjReason, setAdjReason] = React.useState<string>('');
 
   // Fetch departments for dropdown
   const { data: departments = [] } = useSWR('/api/departments', () => 
@@ -313,6 +318,30 @@ const PayrollAdminPanel: React.FC = () => {
                     >
                       PDF
                     </button>
+                    {p.status !== 'paid' && (
+                      <button
+                        onClick={()=>{
+                          setAdjusting(p);
+                          setAdjBonus(p.bonus || 0);
+                          setAdjAllow({
+                            housing: p.allowances?.housing || 0,
+                            transport: p.allowances?.transport || 0,
+                            meal: p.allowances?.meal || 0,
+                            other: p.allowances?.other || 0,
+                          });
+                          setAdjDed({
+                            tax: p.deductions?.tax || 0,
+                            insurance: p.deductions?.insurance || 0,
+                            pension: p.deductions?.pension || 0,
+                            other: p.deductions?.other || 0,
+                          });
+                          setAdjReason('');
+                        }}
+                        className="px-2 py-1 rounded border text-xs"
+                      >
+                        Adjust
+                      </button>
+                    )}
                   </div>
                 </td>
               </tr>
@@ -320,6 +349,82 @@ const PayrollAdminPanel: React.FC = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Adjust Modal */}
+      {adjusting && (
+        <Modal isOpen={!!adjusting} onClose={()=>setAdjusting(null)} title={`Adjust Payroll – ${(adjusting.employeeId?.firstName && adjusting.employeeId?.lastName) ? `${adjusting.employeeId.firstName} ${adjusting.employeeId.lastName}` : 'Employee'}`}>
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              <div>
+                <label className="block text-sm text-gray-700 mb-1">Bonus</label>
+                <input type="number" min={0} className="border rounded px-2 py-1 w-full" value={adjBonus} onChange={e=>setAdjBonus(parseInt(e.target.value)||0)} />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-700 mb-1">Tax</label>
+                <input type="number" min={0} className="border rounded px-2 py-1 w-full" value={adjDed.tax} onChange={e=>setAdjDed(d=>({ ...d, tax: parseInt(e.target.value)||0 }))} />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-700 mb-1">PF</label>
+                <input type="number" min={0} className="border rounded px-2 py-1 w-full" value={adjDed.pension} onChange={e=>setAdjDed(d=>({ ...d, pension: parseInt(e.target.value)||0 }))} />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-700 mb-1">Insurance</label>
+                <input type="number" min={0} className="border rounded px-2 py-1 w-full" value={adjDed.insurance} onChange={e=>setAdjDed(d=>({ ...d, insurance: parseInt(e.target.value)||0 }))} />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-700 mb-1">Other Deduction</label>
+                <input type="number" min={0} className="border rounded px-2 py-1 w-full" value={adjDed.other} onChange={e=>setAdjDed(d=>({ ...d, other: parseInt(e.target.value)||0 }))} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div>
+                <label className="block text-sm text-gray-700 mb-1">Allow. Housing</label>
+                <input type="number" min={0} className="border rounded px-2 py-1 w-full" value={adjAllow.housing} onChange={e=>setAdjAllow(a=>({ ...a, housing: parseInt(e.target.value)||0 }))} />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-700 mb-1">Allow. Transport</label>
+                <input type="number" min={0} className="border rounded px-2 py-1 w-full" value={adjAllow.transport} onChange={e=>setAdjAllow(a=>({ ...a, transport: parseInt(e.target.value)||0 }))} />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-700 mb-1">Allow. Meal</label>
+                <input type="number" min={0} className="border rounded px-2 py-1 w-full" value={adjAllow.meal} onChange={e=>setAdjAllow(a=>({ ...a, meal: parseInt(e.target.value)||0 }))} />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-700 mb-1">Allow. Other</label>
+                <input type="number" min={0} className="border rounded px-2 py-1 w-full" value={adjAllow.other} onChange={e=>setAdjAllow(a=>({ ...a, other: parseInt(e.target.value)||0 }))} />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm text-gray-700 mb-1">Reason (required)</label>
+              <input className="border rounded px-2 py-1 w-full" value={adjReason} onChange={e=>setAdjReason(e.target.value)} placeholder="Explain why this adjustment is needed" />
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <button onClick={()=>setAdjusting(null)} className="px-3 py-1 border rounded">Cancel</button>
+              <button
+                onClick={async ()=>{
+                  try {
+                    if (!adjReason.trim()) { toast.error('Reason is required'); return; }
+                    await payrollAPI.adjust(adjusting._id, {
+                      bonus: adjBonus,
+                      allowances: adjAllow,
+                      deductions: adjDed,
+                      reason: adjReason
+                    });
+                    toast.success('Payroll adjusted');
+                    setAdjusting(null);
+                    await load();
+                  } catch (e:any) {
+                    toast.error(e?.response?.data?.message || 'Failed to adjust payroll');
+                  }
+                }}
+                className="px-3 py-1 bg-orange-600 text-white rounded disabled:opacity-50"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 };
