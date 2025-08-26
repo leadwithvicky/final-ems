@@ -110,18 +110,24 @@ const payrollSchema = new Schema<IPayroll>({
 // Compound index for employee, month, and year
 payrollSchema.index({ employeeId: 1, month: 1, year: 1 }, { unique: true });
 
-// Calculate totals before saving
-payrollSchema.pre('save', function(next) {
-  const allowances = this.allowances.housing + this.allowances.transport + 
-                   this.allowances.meal + this.allowances.other;
-  
-  const deductions = this.deductions.tax + this.deductions.insurance + 
-                   this.deductions.pension + this.deductions.other;
-  
-  this.totalEarnings = this.basicSalary + allowances + this.overtime + this.bonus;
+// Calculate totals before validation so required fields are present
+payrollSchema.pre('validate', function(next) {
+  const safeNumber = (v: any) => (typeof v === 'number' && !isNaN(v) ? v : 0);
+
+  const a = this.allowances || { housing: 0, transport: 0, meal: 0, other: 0 };
+  const d = this.deductions || { tax: 0, insurance: 0, pension: 0, other: 0 };
+
+  const allowances = safeNumber(a.housing) + safeNumber(a.transport) + safeNumber(a.meal) + safeNumber(a.other);
+  const deductions = safeNumber(d.tax) + safeNumber(d.insurance) + safeNumber(d.pension) + safeNumber(d.other);
+
+  const basic = safeNumber(this.basicSalary);
+  const overtime = safeNumber(this.overtime);
+  const bonus = safeNumber(this.bonus);
+
+  this.totalEarnings = basic + allowances + overtime + bonus;
   this.totalDeductions = deductions;
   this.netSalary = this.totalEarnings - this.totalDeductions;
-  
+
   next();
 });
 

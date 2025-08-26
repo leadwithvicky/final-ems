@@ -20,6 +20,8 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const employeeId = searchParams.get('employeeId');
+    const department = searchParams.get('department');
+    const format = searchParams.get('format');
     const month = searchParams.get('month');
     const year = searchParams.get('year');
 
@@ -38,11 +40,41 @@ export async function GET(request: NextRequest) {
 
     if (month) query.month = parseInt(month);
     if (year) query.year = parseInt(year);
+    if (department) {
+      const employees = await Employee.find({ department }).select('_id');
+      query.employeeId = { $in: employees.map(e => e._id) };
+    }
 
     const payroll = await Payroll.find(query)
       .populate('employeeId', 'name email department')
       .populate('processedBy', 'name')
       .sort({ year: -1, month: -1 });
+
+    if (format === 'csv') {
+      const headers = ['Employee','Email','Department','Month','Year','Basic','Overtime','Bonus','TotalEarnings','TotalDeductions','Net','Status'];
+      const rows = payroll.map((p:any)=> [
+        p.employeeId?.name || p.employeeId?.fullName || '',
+        p.employeeId?.email || '',
+        p.employeeId?.department || '',
+        p.month,
+        p.year,
+        p.basicSalary,
+        p.overtime,
+        p.bonus,
+        p.totalEarnings,
+        p.totalDeductions,
+        p.netSalary,
+        p.status
+      ]);
+      const csv = [headers.join(','), ...rows.map(r=>r.join(','))].join('\n');
+      return new NextResponse(csv, {
+        status: 200,
+        headers: {
+          'Content-Type': 'text/csv; charset=utf-8',
+          'Content-Disposition': 'attachment; filename="payroll.csv"'
+        }
+      });
+    }
 
     return NextResponse.json(payroll);
   } catch (error) {
@@ -109,6 +141,42 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(populatedPayroll, { status: 201 });
   } catch (error) {
     console.error('Error creating payroll:', error);
+    return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
+  }
+}
+
+// Simple stats endpoint via query: action=stats
+export async function PUT(request: NextRequest) {
+  try {
+    await connectDB();
+
+    const token = request.headers.get('authorization')?.replace('Bearer ', '');
+    if (!token) {
+      return NextResponse.json({ message: 'No token provided' }, { status: 401 });
+    }
+
+    const decoded = verifyToken(token);
+    if (!decoded || (decoded.role !== 'admin' && decoded.role !== 'superadmin')) {
+      return NextResponse.json({ message: 'Unauthorized' }, { status: 403 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const action = searchParams.get('action');
+
+    if (action === 'stats') {
+      const { month, year } = Object.fromEntries(searchParams.entries());
+      const query: any = {};
+      if (month) query.month = parseInt(month);
+      if (year) query.year = parseInt(year);
+      const items = await Payroll.find(query);
+      const totalPayout = items.reduce((sum, p) => sum + (p.netSalary || 0), 0);
+      const counts = items.reduce((acc: any, p) => { acc[p.status] = (acc[p.status] || 0) + 1; return acc; }, {});
+      return NextResponse.json({ totalPayout, count: items.length, statusCounts: counts });
+    }
+
+    return NextResponse.json({ message: 'Unsupported action' }, { status: 400 });
+  } catch (error) {
+    console.error('Error in payroll PUT:', error);
     return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
   }
 }

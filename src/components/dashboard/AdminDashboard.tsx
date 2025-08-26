@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import useSWR from 'swr';
-import { attendanceAPI, leaveAPI } from '@/lib/api';
+import { attendanceAPI, leaveAPI, payrollAPI } from '@/lib/api';
 import { useNotification } from '@/contexts/NotificationContext';
 import AttendanceAdminView from './AttendanceAdminView';
 import Modal from '../Modal';
@@ -19,6 +19,138 @@ import AvatarUploader from '@/components/AvatarUploader';
 interface AdminDashboardProps {
   hideHeader?: boolean;
 }
+
+// Lightweight admin payroll panel
+const PayrollAdminPanel: React.FC = () => {
+  const [month, setMonth] = React.useState<number>(new Date().getMonth() + 1);
+  const [year, setYear] = React.useState<number>(new Date().getFullYear());
+  const [notes, setNotes] = React.useState<string>('');
+  const [department, setDepartment] = React.useState<string>('');
+  const [processing, setProcessing] = React.useState(false);
+  const [stats, setStats] = React.useState<any>(null);
+  const [list, setList] = React.useState<any[]>([]);
+
+  const load = async () => {
+    try {
+      const [statsRes, listRes] = await Promise.all([
+        payrollAPI.stats({ month, year }),
+        payrollAPI.getAll({ month, year, department: department || undefined })
+      ]);
+      setStats(statsRes.data);
+      setList(listRes.data || []);
+    } catch {}
+  };
+
+  React.useEffect(() => { load(); }, [month, year]);
+
+  const handleProcess = async () => {
+    try {
+      setProcessing(true);
+      await payrollAPI.process({ month, year, notes });
+      await load();
+      toast.success('Payroll processed for selected month.');
+    } catch (e: any) {
+      toast.error(e?.response?.data?.message || 'Failed to process payroll');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-end gap-3">
+        <div>
+          <label className="block text-sm text-gray-700 mb-1">Month</label>
+          <select className="border rounded px-2 py-1" value={month} onChange={e=>setMonth(parseInt(e.target.value))}>
+            {Array.from({length:12},(_,i)=>i+1).map(m=> (
+              <option key={m} value={m}>{m}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm text-gray-700 mb-1">Year</label>
+          <input className="border rounded px-2 py-1 w-28" type="number" value={year} onChange={e=>setYear(parseInt(e.target.value)||year)} />
+        </div>
+        <div>
+          <label className="block text-sm text-gray-700 mb-1">Department</label>
+          <input className="border rounded px-2 py-1 w-48" placeholder="All" value={department} onChange={e=>setDepartment(e.target.value)} />
+        </div>
+        <div className="flex-1 min-w-[200px]">
+          <label className="block text-sm text-gray-700 mb-1">Notes (optional)</label>
+          <input className="border rounded px-2 py-1 w-full" value={notes} onChange={e=>setNotes(e.target.value)} placeholder="e.g., Mid-year bonus included" />
+        </div>
+        <button onClick={handleProcess} disabled={processing} className={`px-4 py-2 rounded text-white ${processing? 'bg-orange-400':'bg-orange-600 hover:bg-orange-700'}`}>{processing? 'Processing...':'Generate Payroll'}</button>
+        <button
+          className="px-4 py-2 rounded border"
+          onClick={async ()=>{
+            try {
+              const blob = await payrollAPI.exportCsv({ month, year, department: department || undefined });
+              const url = window.URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `payroll_${year}_${month}${department?`_${department}`:''}.csv`;
+              document.body.appendChild(a);
+              a.click();
+              a.remove();
+              window.URL.revokeObjectURL(url);
+            } catch (e:any) {
+              toast.error(e?.response?.data?.message || 'Failed to export CSV');
+            }
+          }}
+        >Export CSV</button>
+      </div>
+
+      {stats && (
+        <div className="bg-gray-50 rounded p-4 text-sm text-gray-800">
+          <div className="flex gap-6">
+            <div><span className="font-medium">Employees:</span> {stats.count}</div>
+            <div><span className="font-medium">Total Payout:</span> ₹{stats.totalPayout}</div>
+            <div className="flex gap-2 items-center">
+              <span className="font-medium">Status:</span>
+              <span className="px-2 py-0.5 rounded bg-yellow-100 text-yellow-800">pending: {stats.statusCounts?.pending||0}</span>
+              <span className="px-2 py-0.5 rounded bg-blue-100 text-blue-800">processed: {stats.statusCounts?.processed||0}</span>
+              <span className="px-2 py-0.5 rounded bg-green-100 text-green-800">paid: {stats.statusCounts?.paid||0}</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="overflow-x-auto">
+        <table className="min-w-full text-sm">
+          <thead>
+            <tr className="text-left text-gray-600">
+              <th className="py-2">Employee</th>
+              <th className="py-2">Basic</th>
+              <th className="py-2">Overtime</th>
+              <th className="py-2">Deductions</th>
+              <th className="py-2">Net</th>
+              <th className="py-2">Status</th>
+              <th className="py-2">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {list.map((p:any)=> (
+              <tr key={p._id} className="border-t">
+                <td className="py-2">{p.employeeId?.name || p.employeeId?.fullName || 'Employee'}</td>
+                <td className="py-2">₹{p.basicSalary}</td>
+                <td className="py-2">₹{p.overtime}</td>
+                <td className="py-2">₹{p.totalDeductions}</td>
+                <td className="py-2 font-medium">₹{p.netSalary}</td>
+                <td className="py-2 capitalize">{p.status}</td>
+                <td className="py-2">
+                  <div className="flex gap-2">
+                    <button onClick={async ()=>{ await payrollAPI.markPaid(p._id); await load(); toast.success('Marked paid'); }} className="px-2 py-1 rounded bg-green-600 text-white disabled:opacity-50" disabled={p.status==='paid'}>Mark Paid</button>
+                    <a href={`/api/payroll/${p._id}/payslip`} target="_blank" className="px-2 py-1 rounded border">Payslip</a>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ hideHeader = false }) => {
   const { user, logout } = useAuth();
@@ -95,13 +227,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ hideHeader = false }) =
 
   // SWR for leaves
   const { data: leaves = [], isLoading: leavesLoading, mutate: mutateLeaves } = useSWR(token ? ['/api/leaves', token] : null, ([url, t]) => fetch(url, { headers: { Authorization: `Bearer ${t}` } }).then(res => res.json()));
+  const [selectedLeave, setSelectedLeave] = useState<any | null>(null);
+  const [actionComments, setActionComments] = useState('');
 
   // Approve leave using API endpoint
   const handleApproveLeave = async (leaveId: string, name: string) => {
     try {
-      await leaveAPI.approve(leaveId);
+      await leaveAPI.approve(leaveId, actionComments || undefined);
       toast.success(`${name}'s leave request has been approved and leave balance updated.`);
       mutateLeaves();
+      setSelectedLeave(null);
+      setActionComments('');
     } catch (err: any) {
       toast.error(err?.response?.data?.message || err.message || 'Failed to approve leave');
     }
@@ -109,9 +245,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ hideHeader = false }) =
 
   const handleRejectLeave = async (leaveId: string, name: string) => {
     try {
-      await leaveAPI.reject(leaveId);
+      await leaveAPI.reject(leaveId, actionComments || undefined);
       toast.success(`${name}'s leave request has been rejected.`);
       mutateLeaves();
+      setSelectedLeave(null);
+      setActionComments('');
     } catch (err: any) {
       toast.error(err?.response?.data?.message || err.message || 'Failed to reject leave');
     }
@@ -362,40 +500,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ hideHeader = false }) =
         <div className="p-6">
           {selectedTab === 'overview' && (
             <div className="space-y-6">
-              {/* Admin's Own Attendance Section */}
-              <div className="bg-gradient-to-r from-orange-500 to-coral-500 rounded-xl p-6 text-white">
-                <h3 className="text-lg font-semibold mb-4">Today's Attendance</h3>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm opacity-90">
-                      {todayAttendance ?
-                        `Clocked in at ${todayAttendance.clockIn ? new Date(todayAttendance.clockIn).toLocaleTimeString() : ''}` :
-                        'Not clocked in yet'}
-                    </p>
-                    {todayAttendance?.clockOut && (
-                      <p className="text-sm opacity-90">
-                        Clocked out at {new Date(todayAttendance.clockOut).toLocaleTimeString()}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex space-x-3">
-                    {!todayAttendance ? (
-                      <button
-                        onClick={handleClockIn}
-                        className="bg-white text-orange-600 px-4 py-2 rounded-lg font-medium hover:bg-gray-100"
-                      >
-                        Clock In
-                      </button>
-                    ) : !todayAttendance.clockOut ? (
-                      <button
-                        onClick={handleClockOut}
-                        className="bg-white text-orange-600 px-4 py-2 rounded-lg font-medium hover:bg-gray-100"
-                      >
-                        Clock Out
-                      </button>
-                    ) : null}
-                  </div>
+              {/* Tip: Personal clock-in is in employee portal */}
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start gap-3">
+                <div className="w-2 h-2 mt-2 bg-blue-500 rounded-full"></div>
+                <div className="flex-1">
+                  <h4 className="text-sm font-semibold text-blue-800">Personal clock-in/out</h4>
+                  <p className="text-sm text-blue-700">Admins and Super Admins should record their own attendance using an Employee login. Please log out and sign in with your employee account to clock in/out. This keeps one source of truth and avoids duplicates in reports.</p>
                 </div>
+                {/* Link removed intentionally to avoid confusion */}
               </div>
 
               {/* Leave Requests */}
@@ -405,19 +517,25 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ hideHeader = false }) =
                   {Array.isArray(leaves) && leaves.filter((l: any) => l.status === 'pending').map((leave: any) => (
                     <div key={leave._id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                       <div className="flex items-center gap-2">
-                        <Avatar name={leave.employee?.name || 'Employee'} size={24} />
-                        <p className="font-medium text-gray-900">{leave.employee?.name || 'Employee'}</p>
+                        <Avatar name={(leave.employee?.firstName && leave.employee?.lastName) ? `${leave.employee.firstName} ${leave.employee.lastName}` : 'Employee'} size={24} />
+                        <p className="font-medium text-gray-900">{(leave.employee?.firstName && leave.employee?.lastName) ? `${leave.employee.firstName} ${leave.employee.lastName}` : 'Employee'}</p>
                         <p className="text-sm text-gray-600">{leave.leaveType} • {new Date(leave.startDate).toLocaleDateString()} - {new Date(leave.endDate).toLocaleDateString()} • {leave.days} days</p>
                       </div>
                       <div className="flex space-x-2">
                         <button
-                          onClick={() => handleApproveLeave(leave._id, leave.employee?.name || 'Employee')}
+                          onClick={() => setSelectedLeave(leave)}
+                          className="px-3 py-1 bg-white border rounded-lg text-sm hover:bg-gray-100"
+                        >
+                          View
+                        </button>
+                        <button
+                          onClick={() => { setSelectedLeave(leave); }}
                           className="px-3 py-1 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700"
                         >
                           Approve
                         </button>
                         <button
-                          onClick={() => handleRejectLeave(leave._id, leave.employee?.name || 'Employee')}
+                          onClick={() => { setSelectedLeave(leave); }}
                           className="px-3 py-1 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700"
                         >
                           Reject
@@ -473,9 +591,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ hideHeader = false }) =
                 {Array.isArray(leaves) && leaves.map((leave: any) => (
                   <div key={leave._id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                     <div>
-                      <p className="font-medium text-gray-900">{leave.employee?.name || 'Employee'}</p>
+                      <p className="font-medium text-gray-900">{(leave.employee?.firstName && leave.employee?.lastName) ? `${leave.employee.firstName} ${leave.employee.lastName}` : 'Employee'}</p>
                       <p className="text-sm text-gray-600">{leave.leaveType} • {new Date(leave.startDate).toLocaleDateString()} - {new Date(leave.endDate).toLocaleDateString()} • {leave.days} days</p>
                       {leave.reason && <p className="text-xs text-gray-500">Reason: {leave.reason}</p>}
+                      {leave.comments && <p className="text-xs text-gray-500">Admin Comments: {leave.comments}</p>}
                     </div>
                     <div className="flex items-center space-x-3">
                       <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(leave.status)}`}>
@@ -483,18 +602,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ hideHeader = false }) =
                       </span>
                       {leave.status === 'pending' && (
                         <div className="flex space-x-2">
-                          <button
-                            onClick={() => handleApproveLeave(leave._id, leave.employee?.name || 'Employee')}
-                            className="px-3 py-1 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700"
-                          >
-                            Approve
-                          </button>
-                          <button
-                            onClick={() => handleRejectLeave(leave._id, leave.employee?.name || 'Employee')}
-                            className="px-3 py-1 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700"
-                          >
-                            Reject
-                          </button>
+                          <button onClick={() => setSelectedLeave(leave)} className="px-3 py-1 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700">Approve</button>
+                          <button onClick={() => setSelectedLeave(leave)} className="px-3 py-1 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700">Reject</button>
                         </div>
                       )}
                     </div>
@@ -504,12 +613,39 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ hideHeader = false }) =
             </div>
           )}
 
+          {/* Leave Details Modal */}
+          {selectedLeave && (
+            <Modal isOpen={!!selectedLeave} onClose={() => { setSelectedLeave(null); setActionComments(''); }} title="Leave Request Details">
+              <div className="space-y-3">
+                <div>
+                  <p className="text-sm text-gray-700"><span className="font-semibold">Employee:</span> {(selectedLeave.employee?.firstName && selectedLeave.employee?.lastName) ? `${selectedLeave.employee.firstName} ${selectedLeave.employee.lastName}` : 'Employee'}</p>
+                  <p className="text-sm text-gray-700"><span className="font-semibold">Type:</span> {selectedLeave.leaveType}</p>
+                  <p className="text-sm text-gray-700"><span className="font-semibold">Dates:</span> {new Date(selectedLeave.startDate).toLocaleDateString()} - {new Date(selectedLeave.endDate).toLocaleDateString()} ({selectedLeave.days} days)</p>
+                  <p className="text-sm text-gray-700"><span className="font-semibold">Reason:</span> {selectedLeave.reason}</p>
+                  {selectedLeave.comments && <p className="text-sm text-gray-700"><span className="font-semibold">Existing Comments:</span> {selectedLeave.comments}</p>}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Comments (optional)</label>
+                  <textarea
+                    className="border rounded px-2 py-1 w-full"
+                    rows={3}
+                    value={actionComments}
+                    onChange={e => setActionComments(e.target.value)}
+                    placeholder="Add a note for the employee"
+                  />
+                </div>
+                <div className="flex justify-end gap-2 pt-2">
+                  <button onClick={() => handleRejectLeave(selectedLeave._id, (selectedLeave.employee?.firstName && selectedLeave.employee?.lastName) ? `${selectedLeave.employee.firstName} ${selectedLeave.employee.lastName}` : 'Employee')} className="px-3 py-1 bg-red-600 text-white rounded">Reject</button>
+                  <button onClick={() => handleApproveLeave(selectedLeave._id, (selectedLeave.employee?.firstName && selectedLeave.employee?.lastName) ? `${selectedLeave.employee.firstName} ${selectedLeave.employee.lastName}` : 'Employee')} className="px-3 py-1 bg-green-600 text-white rounded">Approve</button>
+                </div>
+              </div>
+            </Modal>
+          )}
+
           {selectedTab === 'payroll' && (
             <div className="space-y-6">
               <h3 className="text-lg font-semibold text-gray-900">Payroll Management</h3>
-              <div className="bg-gray-50 p-6 rounded-lg">
-                <p className="text-gray-600">Payroll features coming soon...</p>
-              </div>
+              <PayrollAdminPanel />
             </div>
           )}
 

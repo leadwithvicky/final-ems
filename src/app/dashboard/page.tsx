@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/contexts/AuthContext';
 import EmployeeDashboard from '@/components/dashboard/EmployeeDashboard'; 
-import AdminDashboard from '@/components/Dashboard/AdminDashboard';
+import AdminDashboard from '@/components/dashboard/AdminDashboard';
 import SuperadminDashboard from '@/components/dashboard/SuperadminDashboard';
 import GlobalChat from '@/components/GlobalChat';
 

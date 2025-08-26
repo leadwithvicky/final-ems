@@ -339,6 +339,12 @@ const EmployeeDashboard: React.FC = () => {
                           <p className="text-sm text-gray-600">
                             {new Date(leave.startDate).toLocaleDateString()} - {new Date(leave.endDate).toLocaleDateString()}
                           </p>
+                          {leave.reason && (
+                            <p className="text-sm text-gray-600">Reason: {leave.reason}</p>
+                          )}
+                          {leave.comments && (
+                            <p className="text-sm text-gray-600">Admin Note: {leave.comments}</p>
+                          )}
                         </div>
                         <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(leave.status)}`}>
                           {leave.status}
@@ -433,12 +439,15 @@ const EmployeeDashboard: React.FC = () => {
                   {leaves.map((leave: any, index: number) => (
                     <div key={leave._id || index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                       <div>
-                                                 <p className="font-medium text-gray-900">{leave.leaveType}</p>
+                        <p className="font-medium text-gray-900">{leave.leaveType}</p>
                         <p className="text-sm text-gray-600">
                           {new Date(leave.startDate).toLocaleDateString()} - {new Date(leave.endDate).toLocaleDateString()}
                         </p>
                         {leave.reason && (
                           <p className="text-sm text-gray-600">Reason: {leave.reason}</p>
+                        )}
+                        {leave.comments && (
+                          <p className="text-sm text-gray-600">Admin Note: {leave.comments}</p>
                         )}
                       </div>
                       <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(leave.status)}`}>

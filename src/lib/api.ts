@@ -63,8 +63,8 @@ export const leaveAPI = {
   create: (leaveData: any) => api.post('/leaves', leaveData),
   update: (id: string, leaveData: any) => api.put(`/leaves/${id}`, leaveData),
   delete: (id: string) => api.delete(`/leaves/${id}`),
-  approve: (id: string) => api.post(`/leaves/${id}/approve`, {}),
-  reject: (id: string) => api.post(`/leaves/${id}/reject`, {}),
+  approve: (id: string, comments?: string) => api.post(`/leaves/${id}/approve`, comments ? { comments } : {}),
+  reject: (id: string, comments?: string) => api.post(`/leaves/${id}/reject`, comments ? { comments } : {}),
   getStats: () => api.get('/leaves/stats'),
 };
 
@@ -82,6 +82,14 @@ export const payrollAPI = {
   getAll: (params?: any) => api.get('/payroll', { params }),
   getMyPayroll: () => api.get('/payroll'),
   create: (payrollData: any) => api.post('/payroll', payrollData),
+  process: (payload: { month: number; year: number; employeeId?: string; notes?: string }) => api.post('/payroll/process', payload),
+  stats: (params?: { month?: number; year?: number }) => api.get('/payroll/stats', { params }),
+  markPaid: (id: string) => api.put(`/payroll/${id}/pay`),
+  downloadPayslip: (id: string) => api.get(`/payroll/${id}/payslip`),
+  exportCsv: async (params: any = {}) => {
+    const res = await api.get('/payroll', { params: { ...params, format: 'csv' }, responseType: 'blob' });
+    return res.data as Blob;
+  },
   update: (id: string, payrollData: any) => api.put(`/payroll/${id}`, payrollData),
   getById: (id: string) => api.get(`/payroll/${id}`),
   getStats: () => api.get('/payroll/stats'),
