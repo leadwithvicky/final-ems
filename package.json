@@ -12,6 +12,7 @@
     "axios": "^1.6.2",
     "bcryptjs": "^2.4.3",
     "date-fns": "^4.1.0",
+    "iconv-lite": "^0.7.0",
     "ip-cidr": "^4.0.2",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.344.0",
