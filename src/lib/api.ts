@@ -102,6 +102,10 @@ export const payrollAPI = {
   markPaid: (id: string) => api.put(`/payroll/${id}/pay`),
   finalize: (id: string, notes?: string) => api.put(`/payroll/${id}/finalize`, notes ? { notes } : {}),
   downloadPayslip: (id: string) => api.get(`/payroll/${id}/payslip`),
+  downloadPayslipPdf: async (id: string) => {
+    const res = await api.get(`/payroll/${id}/payslip/pdf`, { responseType: 'blob' });
+    return res.data as Blob;
+  },
   exportCsv: async (params: any = {}) => {
     const res = await api.get('/payroll', { params: { ...params, format: 'csv' }, responseType: 'blob' });
     return res.data as Blob;

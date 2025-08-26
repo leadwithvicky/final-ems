@@ -237,7 +237,7 @@ const PayrollAdminPanel: React.FC = () => {
           <tbody>
             {list.map((p:any)=> (
               <tr key={p._id} className="border-t">
-                <td className="py-2">{p.employeeId?.name || p.employeeId?.fullName || 'Employee'}</td>
+                <td className="py-2">{(p.employeeId?.firstName && p.employeeId?.lastName) ? `${p.employeeId.firstName} ${p.employeeId.lastName}` : (p.employeeId?.fullName || 'Employee')}</td>
                 <td className="py-2">₹{p.basicSalary}</td>
                 <td className="py-2">₹{p.overtime}</td>
                 <td className="py-2">₹{p.totalDeductions}</td>
@@ -276,7 +276,43 @@ const PayrollAdminPanel: React.FC = () => {
                     >
                       Mark Paid
                     </button>
-                    <a href={`/api/payroll/${p._id}/payslip`} target="_blank" className="px-2 py-1 rounded border text-xs">Payslip</a>
+                    <button 
+                      onClick={async ()=>{
+                        try {
+                          const res = await payrollAPI.downloadPayslip(p._id);
+                          const dataStr = JSON.stringify(res.data, null, 2);
+                          const blob = new Blob([dataStr], { type: 'application/json' });
+                          const url = window.URL.createObjectURL(blob);
+                          window.open(url, '_blank');
+                          setTimeout(()=> window.URL.revokeObjectURL(url), 10000);
+                        } catch (e:any) {
+                          toast.error(e?.response?.data?.message || 'Failed to fetch payslip');
+                        }
+                      }}
+                      className="px-2 py-1 rounded border text-xs"
+                    >
+                      Payslip
+                    </button>
+                    <button 
+                      onClick={async ()=>{
+                        try {
+                          const blob = await payrollAPI.downloadPayslipPdf(p._id);
+                          const url = window.URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = `payslip_${p.year || ''}_${p.month || ''}.pdf`;
+                          document.body.appendChild(a);
+                          a.click();
+                          a.remove();
+                          setTimeout(()=> window.URL.revokeObjectURL(url), 5000);
+                        } catch (e:any) {
+                          toast.error(e?.response?.data?.message || 'Failed to download PDF');
+                        }
+                      }}
+                      className="px-2 py-1 rounded border text-xs"
+                    >
+                      PDF
+                    </button>
                   </div>
                 </td>
               </tr>

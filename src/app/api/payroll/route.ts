@@ -46,26 +46,30 @@ export async function GET(request: NextRequest) {
     }
 
     const payroll = await Payroll.find(query)
-      .populate('employeeId', 'name email department')
-      .populate('processedBy', 'name')
+      .populate('employeeId', 'firstName lastName email department')
+      .populate('processedBy', 'firstName lastName')
       .sort({ year: -1, month: -1 });
 
     if (format === 'csv') {
       const headers = ['Employee','Email','Department','Month','Year','Basic','Overtime','Bonus','TotalEarnings','TotalDeductions','Net','Status'];
-      const rows = payroll.map((p:any)=> [
-        p.employeeId?.name || p.employeeId?.fullName || '',
-        p.employeeId?.email || '',
-        p.employeeId?.department || '',
-        p.month,
-        p.year,
-        p.basicSalary,
-        p.overtime,
-        p.bonus,
-        p.totalEarnings,
-        p.totalDeductions,
-        p.netSalary,
-        p.status
-      ]);
+      const rows = payroll.map((p:any)=> {
+        const emp = p.employeeId || {};
+        const fullName = emp.fullName || (emp.firstName && emp.lastName ? `${emp.firstName} ${emp.lastName}` : '');
+        return [
+          fullName,
+          emp.email || '',
+          emp.department || '',
+          p.month,
+          p.year,
+          p.basicSalary,
+          p.overtime,
+          p.bonus,
+          p.totalEarnings,
+          p.totalDeductions,
+          p.netSalary,
+          p.status
+        ];
+      });
       const csv = [headers.join(','), ...rows.map(r=>r.join(','))].join('\n');
       return new NextResponse(csv, {
         status: 200,
@@ -136,7 +140,7 @@ export async function POST(request: NextRequest) {
 
     await payroll.save();
     
-    const populatedPayroll = await payroll.populate('employeeId', 'name email department');
+    const populatedPayroll = await payroll.populate('employeeId', 'firstName lastName email department');
     
     return NextResponse.json(populatedPayroll, { status: 201 });
   } catch (error) {
