@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import jwt from 'jsonwebtoken';
+import jwt, { Secret, SignOptions } from 'jsonwebtoken';
 import dbConnect from '@/lib/db';
 import User from '@/lib/models/User';
 
@@ -39,11 +39,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const token = jwt.sign(
-      { id: user._id, role: user.role }, 
-      process.env.JWT_SECRET || 'fallback-secret',
-      { expiresIn: process.env.JWT_EXPIRE || '7d' }
-    );
+    const secret: Secret = (process.env.JWT_SECRET || 'fallback-secret') as Secret;
+    const signOptions: SignOptions = { expiresIn: (process.env.JWT_EXPIRE as any) || '7d' };
+    const token = jwt.sign({ id: user._id, role: user.role }, secret, signOptions);
 
     return NextResponse.json({
       token,
