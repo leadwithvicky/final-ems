@@ -92,7 +92,9 @@ const SuperadminDashboard: React.FC = () => {
           employeeAPI.getAll(),
           leaveAPI.getAll()
         ]);
-        setEmployees(employeesRes.data);
+        const employeePayload: any = employeesRes.data;
+        const employeeItems = Array.isArray(employeePayload) ? employeePayload : (employeePayload?.items || []);
+        setEmployees(employeeItems);
         setLeaves(leavesRes.data);
       } catch (error) {
         addNotification({

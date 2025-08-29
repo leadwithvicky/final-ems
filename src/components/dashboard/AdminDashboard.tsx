@@ -11,10 +11,12 @@ import axios from 'axios';
 import { Users, Calendar, FileText, TrendingUp, Clock, UserPlus, MessageSquare, Award } from 'lucide-react';
 import Avatar from '@/components/Avatar';
 import Layout from '../Layout';
+import EmployeeList from './EmployeeList';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { User as UserIcon } from 'lucide-react';
 import AvatarUploader from '@/components/AvatarUploader';
+import EmployeeForm from './EmployeeForm';
 
 interface AdminDashboardProps {
   hideHeader?: boolean;
@@ -480,6 +482,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ hideHeader = false }) =
   const [showOnboardingModal, setShowOnboardingModal] = useState(false);
   const [showDirectoryModal, setShowDirectoryModal] = useState(false);
   const [showReportsModal, setShowReportsModal] = useState(false);
+  const [showEmployeeDirectoryModal, setShowEmployeeDirectoryModal] = useState(false);
 
   const stats = [
     { label: 'Team Members', value: '156', change: '+8', icon: Users, color: 'from-orange-500 to-coral-500' },
@@ -640,90 +643,38 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ hideHeader = false }) =
         {/* ...existing code... */}
       {/* Add Employee Modal */}
       <Modal isOpen={showAddEmployeeModal} onClose={() => setShowAddEmployeeModal(false)} title="Add New Employee">
-        <form
-          className="flex flex-col gap-3"
-          onSubmit={e => { e.preventDefault(); handleAddEmployee(); }}
-        >
-          <div className="flex gap-2">
-            <input
-              className="border rounded px-2 py-1 flex-1"
-              placeholder="First Name"
-              value={employeeForm.firstName}
-              onChange={e => setEmployeeForm(f => ({ ...f, firstName: e.target.value }))}
-              required
-            />
-            <input
-              className="border rounded px-2 py-1 flex-1"
-              placeholder="Last Name"
-              value={employeeForm.lastName}
-              onChange={e => setEmployeeForm(f => ({ ...f, lastName: e.target.value }))}
-              required
-            />
-          </div>
-          <input
-            className="border rounded px-2 py-1"
-            placeholder="Email"
-            type="email"
-            value={employeeForm.email}
-            onChange={e => setEmployeeForm(f => ({ ...f, email: e.target.value }))}
-            required
-          />
-          <select
-            className="border rounded px-2 py-1"
-            value={employeeForm.department}
-            onChange={e => setEmployeeForm(f => ({ ...f, department: e.target.value }))}
-            required
-          >
-            <option value="">Select Department</option>
-            <option value="Developers">Development</option>
-            <option value="Human Resources">Human Resources</option>
-            <option value="Sales">Sales</option>
-            <option value="Digital Marketing">Digital Marketing</option>
-            <option value="Designers">Designers</option>
-            <option value="Trainers">Trainers</option>
-          </select>
-          <input
-            className="border rounded px-2 py-1"
-            placeholder="Position"
-            value={employeeForm.position}
-            onChange={e => setEmployeeForm(f => ({ ...f, position: e.target.value }))}
-            required
-          />
-          
-          <input
-            className="border rounded px-2 py-1"
-            placeholder="Salary"
-            type="number"
-            value={employeeForm.salary}
-            onChange={e => setEmployeeForm(f => ({ ...f, salary: e.target.value }))}
-            required
-          />
-          <input
-            className="border rounded px-2 py-1"
-            placeholder="Hire Date"
-            type="date"
-            value={employeeForm.hireDate}
-            onChange={e => setEmployeeForm(f => ({ ...f, hireDate: e.target.value }))}
-            required
-          />
-          <input
-            className="border rounded px-2 py-1"
-            placeholder="Temporary Password"
-            type="text"
-            value={employeeForm.password}
-            onChange={e => setEmployeeForm(f => ({ ...f, password: e.target.value }))}
-            required
-          />
-          {addEmployeeError && <div className="text-red-600 text-sm">{addEmployeeError}</div>}
-          <button
-            type="submit"
-            className="bg-orange-600 text-white px-4 py-2 rounded hover:bg-orange-700 transition self-end"
-            disabled={addEmployeeLoading}
-          >
-            {addEmployeeLoading ? 'Adding...' : 'Add Employee'}
-          </button>
-        </form>
+        <EmployeeForm
+          mode="create"
+          showPassword
+          submitLabel={addEmployeeLoading ? 'Adding...' : 'Add Employee'}
+          onCancel={() => setShowAddEmployeeModal(false)}
+          onSubmit={async (vals) => {
+            setAddEmployeeLoading(true);
+            setAddEmployeeError('');
+            try {
+              await employeeAPI.create({
+                firstName: vals.firstName,
+                lastName: vals.lastName,
+                email: vals.email,
+                department: vals.department,
+                position: vals.position,
+                salary: Number(vals.salary),
+                hireDate: vals.hireDate ? new Date(vals.hireDate) : undefined,
+                password: vals.password,
+              });
+              setShowAddEmployeeModal(false);
+              toast.success('New employee has been added to the system.');
+            } catch (e: any) {
+              setAddEmployeeError(e?.response?.data?.message || e.message || 'Failed to add employee');
+            } finally {
+              setAddEmployeeLoading(false);
+            }
+          }}
+        />
+        {addEmployeeError && <div className="text-red-600 text-sm mt-2">{addEmployeeError}</div>}
       </Modal>
+
+      {/* Keep UI unchanged: open Employee Directory in modal when Directory quick action is clicked */}
 
           <button
             onClick={() => setShowOnboardingModal(true)}
@@ -735,7 +686,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ hideHeader = false }) =
           </button>
 
           <button
-            onClick={() => setShowDirectoryModal(true)}
+            onClick={() => setShowEmployeeDirectoryModal(true)}
             className="bg-white p-4 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 text-left"
           >
             <FileText className="w-8 h-8 text-lime-500 mb-2" />
@@ -752,6 +703,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ hideHeader = false }) =
             <p className="text-sm text-gray-600">Generate performance reports</p>
           </button>
         </div>
+
+      {/* Employee Directory Modal */}
+      <Modal isOpen={showEmployeeDirectoryModal} onClose={() => setShowEmployeeDirectoryModal(false)} title="Employee Directory">
+        <div className="pt-2">
+          <EmployeeList />
+        </div>
+      </Modal>
 
       {/* Tab Navigation */}
       <div className="bg-white rounded-xl shadow-lg">
@@ -852,9 +810,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ hideHeader = false }) =
                   Add Employee
                 </button>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {/* ...existing code for employee cards or update to use real employee data... */}
-              </div>
+              <EmployeeList />
             </div>
           )}
 

@@ -19,8 +19,44 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ message: 'Invalid token' }, { status: 401 });
     }
 
-    const employees = await Employee.find({}).select('-password');
-    return NextResponse.json(employees);
+    const { searchParams } = new URL(request.url);
+    const q = searchParams.get('q')?.trim() || '';
+    const department = searchParams.get('department')?.trim() || '';
+    const status = searchParams.get('status')?.trim() || '';
+    const employmentType = searchParams.get('employmentType')?.trim() || '';
+    const manager = searchParams.get('manager')?.trim() || '';
+    const sort = searchParams.get('sort') || 'createdAt:desc';
+    const page = Number(searchParams.get('page') || '1');
+    const limit = Math.min(100, Math.max(1, Number(searchParams.get('limit') || '20')));
+
+    const filter: Record<string, any> = {};
+    if (department) filter.department = department;
+    if (status) filter.status = status;
+    if (employmentType) filter.employmentType = employmentType;
+    if (manager) filter.manager = manager;
+    if (q) {
+      filter.$or = [
+        { firstName: { $regex: q, $options: 'i' } },
+        { lastName: { $regex: q, $options: 'i' } },
+        { email: { $regex: q, $options: 'i' } },
+        { department: { $regex: q, $options: 'i' } },
+        { position: { $regex: q, $options: 'i' } }
+      ];
+    }
+
+    const [sortField, sortDirRaw] = sort.split(':');
+    const sortDir = sortDirRaw === 'asc' ? 1 : -1;
+    const skip = (page - 1) * limit;
+
+    const [items, total] = await Promise.all([
+      Employee.find(filter)
+        .sort({ [sortField]: sortDir })
+        .skip(skip)
+        .limit(limit),
+      Employee.countDocuments(filter)
+    ]);
+
+    return NextResponse.json({ items, total, page, limit });
   } catch (error) {
     console.error('Error fetching employees:', error);
     return NextResponse.json({ message: 'Internal server error' }, { status: 500 });

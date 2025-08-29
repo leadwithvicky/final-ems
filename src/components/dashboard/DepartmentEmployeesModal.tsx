@@ -35,7 +35,7 @@ const DepartmentEmployeesModal: React.FC<DepartmentEmployeesModalProps> = ({ dep
   useEffect(() => {
     if (open && department) {
       setLoading(true);
-      fetch(`/api/departments/${encodeURIComponent(department)}/employees`)
+      fetch(`/api/departments/by-name/${encodeURIComponent(department)}/employees`)
         .then(res => res.json())
         .then(data => {
           setEmployees(data);

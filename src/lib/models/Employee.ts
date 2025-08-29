@@ -5,6 +5,8 @@ export interface IEmployee extends Document {
   firstName: string;
   lastName: string;
   email: string;
+  gender?: 'male' | 'female' | 'other';
+  dateOfBirth?: Date;
   avatarUrl?: string | null;
   avatarPublicId?: string | null;
   phone?: string;
@@ -12,6 +14,9 @@ export interface IEmployee extends Document {
   position: string;
   salary: number;
   hireDate: Date;
+  employmentType?: 'full_time' | 'part_time' | 'intern' | 'contract';
+  status?: 'active' | 'inactive' | 'probation' | 'resigned';
+  manager?: mongoose.Types.ObjectId | null;
   address: {
     street?: string;
     city?: string;
@@ -28,6 +33,32 @@ export interface IEmployee extends Document {
     accountNumber: string;
     bankName: string;
     ifscCode: string;
+  };
+  documents?: {
+    type: string; // e.g., id_proof, contract, certificate
+    url: string;
+    uploadedAt: Date;
+    expiryDate?: Date;
+    verificationStatus?: 'pending' | 'verified' | 'rejected';
+    notes?: string;
+  }[];
+  workLocation?: 'onsite' | 'remote' | 'hybrid';
+  shift?: {
+    name?: string;
+    startTime?: string; // HH:mm
+    endTime?: string;   // HH:mm
+  };
+  contractEndDate?: Date;
+  transferHistory?: {
+    fromDepartment?: string;
+    toDepartment: string;
+    reason?: string;
+    transferredAt: Date;
+  }[];
+  exitInfo?: {
+    resignationReason?: string;
+    lastWorkingDay?: Date;
+    clearanceStatus?: 'pending' | 'in_progress' | 'completed';
   };
   isActive: boolean;
   totalLeaves: number;
@@ -60,6 +91,13 @@ const employeeSchema = new Schema<IEmployee>({
     lowercase: true,
     trim: true
   },
+  gender: {
+    type: String,
+    enum: ['male', 'female', 'other']
+  },
+  dateOfBirth: {
+    type: Date
+  },
   avatarUrl: {
     type: String,
     default: null
@@ -91,6 +129,20 @@ const employeeSchema = new Schema<IEmployee>({
     type: Date,
     required: [true, 'Hire date is required']
   },
+  employmentType: {
+    type: String,
+    enum: ['full_time', 'part_time', 'intern', 'contract']
+  },
+  status: {
+    type: String,
+    enum: ['active', 'inactive', 'probation', 'resigned'],
+    default: 'active'
+  },
+  manager: {
+    type: Schema.Types.ObjectId,
+    ref: 'Employee',
+    default: null
+  },
   address: {
     street: String,
     city: String,
@@ -107,6 +159,40 @@ const employeeSchema = new Schema<IEmployee>({
     accountNumber: String,
     bankName: String,
     ifscCode: String
+  },
+  documents: [{
+    type: {
+      type: String,
+      trim: true
+    },
+    url: String,
+    uploadedAt: { type: Date, default: Date.now },
+    expiryDate: Date,
+    verificationStatus: { type: String, enum: ['pending', 'verified', 'rejected'], default: 'pending' },
+    notes: String
+  }],
+  workLocation: {
+    type: String,
+    enum: ['onsite', 'remote', 'hybrid']
+  },
+  shift: {
+    name: String,
+    startTime: String,
+    endTime: String
+  },
+  contractEndDate: {
+    type: Date
+  },
+  transferHistory: [{
+    fromDepartment: String,
+    toDepartment: { type: String, required: true },
+    reason: String,
+    transferredAt: { type: Date, default: Date.now }
+  }],
+  exitInfo: {
+    resignationReason: String,
+    lastWorkingDay: Date,
+    clearanceStatus: { type: String, enum: ['pending', 'in_progress', 'completed'], default: 'pending' }
   },
   isActive: {
     type: Boolean,
@@ -136,5 +222,12 @@ employeeSchema.virtual('remainingLeaves').get(function() {
 
 // Ensure virtual fields are serialized
 employeeSchema.set('toJSON', { virtuals: true });
+
+// Helpful indexes
+employeeSchema.index({ firstName: 1, lastName: 1 });
+employeeSchema.index({ email: 1 }, { unique: false });
+employeeSchema.index({ department: 1 });
+employeeSchema.index({ position: 1 });
+employeeSchema.index({ status: 1 });
 
 export default mongoose.models.Employee || mongoose.model<IEmployee>('Employee', employeeSchema);

@@ -46,11 +46,17 @@ export const authAPI = {
 
 // Employee API
 export const employeeAPI = {
-  getAll: () => api.get('/employees'),
+  getAll: (params?: any) => api.get('/employees', { params }),
   getById: (id: string) => api.get(`/employees/${id}`),
   create: (employeeData: any) => api.post('/employees', employeeData),
   update: (id: string, employeeData: any) => api.put(`/employees/${id}`, employeeData),
   delete: (id: string) => api.delete(`/employees/${id}`),
+  transfer: (id: string, toDepartment: string, reason?: string) => api.post(`/employees/${id}/transfer`, { toDepartment, reason }),
+  addDocument: (id: string, payload: { type: string; url: string; expiryDate?: string; verificationStatus?: string; notes?: string }) => api.post(`/employees/${id}/documents`, payload),
+  updateDocument: (id: string, index: number, updates: any) => api.put(`/employees/${id}/documents`, { index, updates }),
+  exit: (id: string, payload: { resignationReason?: string; lastWorkingDay?: string; clearanceStatus?: string }) => api.post(`/employees/${id}/exit`, payload),
+  reactivate: (id: string) => api.post(`/employees/${id}/reactivate`),
+  bulkImport: (data: any[] | string, isCsv = false) => isCsv ? api.post('/employees/bulk-import', data, { headers: { 'Content-Type': 'text/csv' } }) : api.post('/employees/bulk-import', data),
   getMyProfile: () => api.get('/employees/user/me'),
   getByDepartment: (department: string) => api.get(`/employees/department/${department}`),
 };
@@ -58,7 +64,12 @@ export const employeeAPI = {
 // Department API
 export const departmentAPI = {
   getAll: () => api.get('/departments'),
-  getEmployees: (department: string) => api.get(`/departments/${department}/employees`),
+  getFull: () => api.get('/departments', { params: { full: true } }),
+  create: (payload: { name: string; code?: string; description?: string }) => api.post('/departments', payload),
+  update: (id: string, payload: Partial<{ name: string; code: string; description: string; isActive: boolean }>) => api.put(`/departments/${id}`, payload),
+  deactivate: (id: string) => api.delete(`/departments/${id}`),
+  getById: (id: string) => api.get(`/departments/${id}`),
+  getEmployees: (department: string) => api.get(`/departments/by-name/${encodeURIComponent(department)}/employees`),
 };
 
 // Leave API
