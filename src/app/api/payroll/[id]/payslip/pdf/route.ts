@@ -183,8 +183,9 @@ export async function GET(
 
     doc.end();
     const pdfBuffer = await pdfPromise;
+    const uint8 = new Uint8Array(pdfBuffer);
 
-    return new NextResponse(pdfBuffer, {
+    return new NextResponse(uint8, {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',
