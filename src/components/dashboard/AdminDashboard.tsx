@@ -9,6 +9,7 @@ import Modal from '../Modal';
 import { employeeAPI } from '@/lib/api';
 import axios from 'axios';
 import { Users, Calendar, FileText, TrendingUp, Clock, UserPlus, MessageSquare, Award } from 'lucide-react';
+import ReportLineChart from './ReportLineChart';
 import Avatar from '@/components/Avatar';
 import Layout from '../Layout';
 import EmployeeList from './EmployeeList';
@@ -484,31 +485,64 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ hideHeader = false }) =
   const [showReportsModal, setShowReportsModal] = useState(false);
   const [showEmployeeDirectoryModal, setShowEmployeeDirectoryModal] = useState(false);
 
+  // Real-time overview stats
+  const { data: employeesMeta } = useSWR(['/api/employees', 'count'], async () => {
+    const res = await employeeAPI.getAll({ page: 1, limit: 1 });
+    return res.data as { items: any[]; total: number; page: number; limit: number };
+  });
+  const employeesTotal = employeesMeta?.total || 0;
+
+  const { data: employeesForHires } = useSWR(['/api/employees', 'hires'], async () => {
+    const res = await employeeAPI.getAll({ page: 1, limit: 1000, sort: 'hireDate:desc' });
+    return (res.data?.items as any[]) || [];
+  });
+  const now = new Date();
+  const hiresThisMonth = (employeesForHires || []).filter((e: any) => {
+    if (!e.hireDate) return false;
+    const d = new Date(e.hireDate);
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  }).length;
+
   const stats = [
-    { label: 'Team Members', value: '156', change: '+8', icon: Users, color: 'from-orange-500 to-coral-500' },
-    { label: 'Pending Leaves', value: '12', change: '-2', icon: Calendar, color: 'from-teal-500 to-cyan-500' },
-    { label: 'This Month Hires', value: '8', change: '+3', icon: UserPlus, color: 'from-lime-500 to-green-500' },
+    { label: 'Team Members', value: String(employeesTotal), change: '', icon: Users, color: 'from-orange-500 to-coral-500' },
+    // { label: 'Pending Leaves', value: '0', change: '', icon: Calendar, color: 'from-teal-500 to-cyan-500' },
+    { label: 'This Month Hires', value: String(hiresThisMonth), change: '', icon: UserPlus, color: 'from-lime-500 to-green-500' },
     { label: 'Average Rating', value: '4.7', change: '+0.2', icon: Award, color: 'from-red-500 to-orange-500' }
-  ];
-
-  const leaveRequests = [
-    { _id: '1', name: 'John Smith', type: 'Annual Leave', duration: '3 days', status: 'pending', dates: 'Mar 15-17' },
-    { _id: '2', name: 'Sarah Wilson', type: 'Sick Leave', duration: '1 day', status: 'approved', dates: 'Mar 14' },
-    { _id: '3', name: 'Mike Johnson', type: 'Personal Leave', duration: '2 days', status: 'pending', dates: 'Mar 20-21' },
-    { _id: '4', name: 'Lisa Brown', type: 'Annual Leave', duration: '5 days', status: 'approved', dates: 'Mar 25-29' }
-  ];
-
-  const recentActivities = [
-    { action: 'New employee onboarded', person: 'Alex Chen', time: '2 hours ago' },
-    { action: 'Performance review completed', person: 'Emma Davis', time: '4 hours ago' },
-    { action: 'Leave request approved', person: 'Mark Wilson', time: '6 hours ago' },
-    { action: 'Training session scheduled', person: 'Team Development', time: '8 hours ago' }
   ];
 
   // SWR for leaves
   const { data: leaves = [], isLoading: leavesLoading, mutate: mutateLeaves } = useSWR(token ? ['/api/leaves', token] : null, ([url, t]) => fetch(url, { headers: { Authorization: `Bearer ${t}` } }).then(res => res.json()));
   const [selectedLeave, setSelectedLeave] = useState<any | null>(null);
   const [actionComments, setActionComments] = useState('');
+
+  // Compute pending leaves after leaves is available (kept for internal use)
+  const pendingLeavesCount = Array.isArray(leaves) ? leaves.filter((l: any) => l.status === 'pending').length : 0;
+
+  // Build recent leaves snapshot from live data (no UI change)
+  const leaveRequests = Array.isArray(leaves)
+    ? leaves.slice(0, 4).map((l: any) => ({
+        _id: l._id,
+        name: (l.employee?.firstName && l.employee?.lastName) ? `${l.employee.firstName} ${l.employee.lastName}` : 'Employee',
+        type: l.leaveType,
+        duration: `${l.days || 0} days`,
+        status: l.status,
+        dates: `${new Date(l.startDate).toLocaleDateString()} - ${new Date(l.endDate).toLocaleDateString()}`
+      }))
+    : [];
+
+  // Derive simple recent activities from latest leaves and hires
+  const recentActivities = [
+    ... (Array.isArray(leaves) ? leaves.slice(0, 2).map((l: any) => ({
+      action: `Leave ${l.status}`,
+      person: (l.employee?.firstName && l.employee?.lastName) ? `${l.employee.firstName} ${l.employee.lastName}` : 'Employee',
+      time: new Date(l.createdAt || l.startDate).toLocaleString()
+    })) : []),
+    ... (Array.isArray(employeesForHires) ? employeesForHires.slice(0, 2).map((e: any) => ({
+      action: 'New employee onboarded',
+      person: (e.firstName && e.lastName) ? `${e.firstName} ${e.lastName}` : 'Employee',
+      time: e.hireDate ? new Date(e.hireDate).toLocaleDateString() : ''
+    })) : [])
+  ];
 
   // Approve leave using API endpoint
   const handleApproveLeave = async (leaveId: string, name: string) => {
@@ -709,6 +743,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ hideHeader = false }) =
         <div className="pt-2">
           <EmployeeList />
         </div>
+      </Modal>
+
+      {/* Reports Modal */}
+      <Modal isOpen={showReportsModal} onClose={() => setShowReportsModal(false)} title="Reports">
+        <ReportsContent month={now.getMonth() + 1} year={now.getFullYear()} />
       </Modal>
 
       {/* Tab Navigation */}
@@ -935,5 +974,48 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ hideHeader = false }) =
     </Layout>
   );
 };
+
+function ReportsContent({ month, year }: { month: number; year: number }) {
+  const { data: payrollStats } = useSWR(['/api/payroll/stats', month, year], () => payrollAPI.stats({ month, year }).then(r=>r.data));
+  const { data: attendanceData } = useSWR(['/api/attendance', 'stats'], () => attendanceAPI.getAll().then(r=>r.data));
+  const labels = Array.from({ length: 12 }, (_, i) => new Date(2000, i, 1).toLocaleString('en-US', { month: 'short' }));
+  const values = labels.map(()=> 0);
+  // If you later store monthly totals in stats, map into values here
+
+  return (
+    <div className="space-y-4">
+      <div className="bg-gray-50 p-4 rounded">
+        <h4 className="font-semibold mb-2">Payroll Overview</h4>
+        <div className="text-sm text-gray-700">
+          <div>Employees: {payrollStats?.count ?? 0}</div>
+          <div>Total Payout: ₹{payrollStats?.totalPayout ?? 0}</div>
+        </div>
+      </div>
+      <div className="bg-white p-2 rounded border">
+        <ReportLineChart data={{ labels, values }} />
+      </div>
+      <div className="flex justify-end">
+        <button
+          className="px-3 py-2 border rounded"
+          onClick={async()=>{
+            try {
+              const blob = await payrollAPI.exportCsv({ month, year });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `payroll_${year}_${month}.csv`;
+              document.body.appendChild(a);
+              a.click();
+              a.remove();
+              URL.revokeObjectURL(url);
+            } catch(e:any) {
+              toast.error(e?.response?.data?.message || 'Export failed');
+            }
+          }}
+        >Export CSV</button>
+      </div>
+    </div>
+  );
+}
 
 export default AdminDashboard;

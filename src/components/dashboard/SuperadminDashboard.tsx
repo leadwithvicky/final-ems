@@ -69,20 +69,26 @@ const SuperadminDashboard: React.FC = () => {
   ];
 
   // Admin stats (copied from AdminDashboard)
+  const hiresThisMonth = Array.isArray(employees)
+    ? employees.filter((e: any) => e?.hireDate && (new Date(e.hireDate)).getMonth() === new Date().getMonth() && (new Date(e.hireDate)).getFullYear() === new Date().getFullYear()).length
+    : 0;
+
   const adminStats = [
-    { label: 'Team Members', value: '156', change: '+8', icon: Users, color: 'from-orange-500 to-coral-500' },
-    // { label: 'Pending Leaves', value: '12', change: '-2', icon: Calendar, color: 'from-teal-500 to-cyan-500' },
-    { label: 'This Month Hires', value: '8', change: '+3', icon: UserPlus, color: 'from-lime-500 to-green-500' },
+    // { label: 'Team Members', value: String(Array.isArray(employees) ? employees.length : 0), change: '', icon: Users, color: 'from-orange-500 to-coral-500' },
+    // { label: 'Pending Leaves', value: String(Array.isArray(leaves) ? leaves.filter((l: any)=> l.status==='pending').length : 0), change: '', icon: Calendar, color: 'from-teal-500 to-cyan-500' },
+    { label: 'This Month Hires', value: String(hiresThisMonth), change: '', icon: UserPlus, color: 'from-lime-500 to-green-500' },
     { label: 'Average Rating', value: '4.7', change: '+0.2', icon: Award, color: 'from-red-500 to-orange-500' }
   ];
 
-  const departments = [
-    { name: 'Engineering', employees: 342, budget: '$890K', performance: 95 },
-    { name: 'Sales', employees: 189, budget: '$456K', performance: 87 },
-    { name: 'Marketing', employees: 156, budget: '$234K', performance: 91 },
-    { name: 'HR', employees: 78, budget: '$123K', performance: 89 },
-    { name: 'Finance', employees: 45, budget: '$567K', performance: 93 }
-  ];
+  const departmentAggregates = React.useMemo(() => {
+    const map: Record<string, { name: string; employees: number }> = {};
+    (employees as any[]).forEach((e) => {
+      const dept = (e?.department || 'Unknown') as string;
+      if (!map[dept]) map[dept] = { name: dept, employees: 0 };
+      map[dept].employees += 1;
+    });
+    return Object.values(map).sort((a, b) => b.employees - a.employees);
+  }, [employees]);
 
   // Fetch real-time data
   useEffect(() => {
