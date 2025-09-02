@@ -140,3 +140,25 @@ export const taskAPI = {
 };
 
 export default api;
+
+// Reports API
+export const reportsAPI = {
+  attendance: (params?: any) => api.get('/reports/attendance', { params }),
+  leaves: (params?: any) => api.get('/reports/leaves', { params }),
+  payroll: (params?: any) => api.get('/reports/payroll', { params }),
+  engagement: (params?: any) => api.get('/reports/engagement', { params }),
+  exportCsv: async (endpoint: string, params?: any) => {
+    const res = await api.get(endpoint, { params: { ...params, format: 'csv' }, responseType: 'blob' });
+    return res.data as Blob;
+  }
+};
+
+// Engagement Polls API
+export const pollsAPI = {
+  list: (status?: 'active' | 'closed') => api.get('/polls', { params: status ? { status } : undefined }),
+  create: (payload: { question: string; type: 'mcq'|'yesno'|'rating'|'text'; options?: string[]; isAnonymousAllowed?: boolean }) => api.post('/polls', payload),
+  vote: (id: string, payload: { answer: string | number; anonymous?: boolean }) => api.post(`/polls/${id}/vote`, payload),
+  close: (id: string) => api.post(`/polls/${id}/close`),
+  results: (id: string) => api.get(`/polls/${id}/results`),
+  delete: (id: string) => api.delete(`/polls/${id}`),
+};

@@ -4,7 +4,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import EmployeeDashboard from '@/components/dashboard/EmployeeDashboard'; 
 import AdminDashboard from '@/components/dashboard/AdminDashboard';
 import SuperadminDashboard from '@/components/dashboard/SuperadminDashboard';
-import GlobalChat from '@/components/GlobalChat';
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -21,9 +20,6 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      {renderDashboard()}
-      <GlobalChat />
-    </div>
+    <div className="min-h-screen bg-gray-100">{renderDashboard()}</div>
   );
 }

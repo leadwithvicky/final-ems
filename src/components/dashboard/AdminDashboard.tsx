@@ -9,6 +9,7 @@ import Modal from '../Modal';
 import { employeeAPI } from '@/lib/api';
 import axios from 'axios';
 import { Users, Calendar, FileText, TrendingUp, Clock, UserPlus, MessageSquare, Award } from 'lucide-react';
+import Link from 'next/link';
 import ReportLineChart from './ReportLineChart';
 import Avatar from '@/components/Avatar';
 import Layout from '../Layout';
@@ -432,6 +433,98 @@ const PayrollAdminPanel: React.FC = () => {
   );
 };
 
+// Simple onboarding wizard component
+const OnboardingWizard: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+  const [step, setStep] = React.useState<number>(1);
+  const [creating, setCreating] = React.useState(false);
+  const [err, setErr] = React.useState('');
+  const [form, setForm] = React.useState({
+    firstName: '', lastName: '', email: '', department: '', position: '', salary: '', hireDate: ''
+  });
+  const [createTasks, setCreateTasks] = React.useState(true);
+
+  const handleCreate = async () => {
+    setCreating(true); setErr('');
+    try {
+      // Reuse existing employee creation API via employee form shape
+      await fetch('/api/employees', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')||''}` },
+        body: JSON.stringify({
+          firstName: form.firstName,
+          lastName: form.lastName,
+          email: form.email,
+          department: form.department,
+          position: form.position,
+          salary: Number(form.salary),
+          hireDate: form.hireDate ? new Date(form.hireDate) : undefined,
+          // password intentionally omitted here (onboarding can send set-password email later)
+        })
+      }).then(async r=>{ if(!r.ok){ throw new Error((await r.json()).message||'Failed'); } return r.json(); });
+      setStep(3);
+      if (createTasks) {
+        // Create a couple of default onboarding tasks
+        await Promise.all([
+          taskAPI.create({ title: 'Submit KYC Documents', description: 'Upload ID proof and bank details', dueDate: new Date(Date.now()+7*86400000), priority: 'medium' }),
+          taskAPI.create({ title: 'Setup Workstation', description: 'Collect laptop and credentials from IT', dueDate: new Date(Date.now()+3*86400000), priority: 'high' }),
+        ]).catch(()=>{});
+      }
+    } catch (e:any) {
+      setErr(e?.message || 'Failed to create employee');
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      {step === 1 && (
+        <div className="space-y-3">
+          <h4 className="font-semibold">Pre-onboarding</h4>
+          <p className="text-sm text-gray-600">Collect basic details for the new hire.</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <input className="border rounded px-2 py-1" placeholder="First Name" value={form.firstName} onChange={e=>setForm(f=>({ ...f, firstName:e.target.value }))} />
+            <input className="border rounded px-2 py-1" placeholder="Last Name" value={form.lastName} onChange={e=>setForm(f=>({ ...f, lastName:e.target.value }))} />
+            <input className="border rounded px-2 py-1 md:col-span-2" placeholder="Email" type="email" value={form.email} onChange={e=>setForm(f=>({ ...f, email:e.target.value }))} />
+            <input className="border rounded px-2 py-1" placeholder="Department" value={form.department} onChange={e=>setForm(f=>({ ...f, department:e.target.value }))} />
+            <input className="border rounded px-2 py-1" placeholder="Position" value={form.position} onChange={e=>setForm(f=>({ ...f, position:e.target.value }))} />
+            <input className="border rounded px-2 py-1" placeholder="Salary" type="number" value={form.salary} onChange={e=>setForm(f=>({ ...f, salary:e.target.value }))} />
+            <input className="border rounded px-2 py-1" placeholder="Hire Date" type="date" value={form.hireDate} onChange={e=>setForm(f=>({ ...f, hireDate:e.target.value }))} />
+          </div>
+          <div className="flex justify-end gap-2">
+            <button className="px-3 py-1 border rounded" onClick={onClose}>Cancel</button>
+            <button className="px-3 py-1 bg-orange-600 text-white rounded" onClick={()=>setStep(2)}>Next</button>
+          </div>
+        </div>
+      )}
+      {step === 2 && (
+        <div className="space-y-3">
+          <h4 className="font-semibold">Create Employee</h4>
+          <p className="text-sm text-gray-600">Confirm details and create the employee record. Optionally add default onboarding tasks.</p>
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={createTasks} onChange={e=>setCreateTasks(e.target.checked)} />
+            Create default onboarding tasks
+          </label>
+          {err && <div className="text-red-600 text-sm">{err}</div>}
+          <div className="flex justify-between">
+            <button className="px-3 py-1 border rounded" onClick={()=>setStep(1)}>Back</button>
+            <button className="px-3 py-1 bg-orange-600 text-white rounded disabled:opacity-50" disabled={creating} onClick={handleCreate}>{creating? 'Creating...' : 'Create'}</button>
+          </div>
+        </div>
+      )}
+      {step === 3 && (
+        <div className="space-y-3">
+          <h4 className="font-semibold">All set!</h4>
+          <p className="text-sm text-gray-600">The employee was created. You can now assign a manager, set shift, and upload documents in Employee Management.</p>
+          <div className="flex justify-end">
+            <button className="px-3 py-1 bg-orange-600 text-white rounded" onClick={onClose}>Done</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ hideHeader = false }) => {
   const { user, logout } = useAuth();
   const { addNotification } = useNotification();
@@ -480,8 +573,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ hideHeader = false }) =
     hireDate: '',
     password: ''
   });
-  const [showOnboardingModal, setShowOnboardingModal] = useState(false);
-  const [showDirectoryModal, setShowDirectoryModal] = useState(false);
+  
+  
   const [showReportsModal, setShowReportsModal] = useState(false);
   const [showEmployeeDirectoryModal, setShowEmployeeDirectoryModal] = useState(false);
 
@@ -592,15 +685,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ hideHeader = false }) =
     }
   };
 
-  const handleViewOnboarding = () => {
-    setShowOnboardingModal(false);
-    toast.success('Onboarding pipeline opened.');
-  };
+  
 
-  const handleBrowseDirectory = () => {
-    setShowDirectoryModal(false);
-    toast.success('Employee directory opened.');
-  };
+  
 
   const handleViewReports = () => {
     setShowReportsModal(false);
@@ -613,7 +700,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ hideHeader = false }) =
     { id: 'attendance', label: 'Attendance', icon: Clock },
     { id: 'leaves', label: 'Leave Management', icon: Calendar },
     { id: 'payroll', label: 'Payroll', icon: FileText },
-    { id: 'communication', label: 'Communication', icon: MessageSquare },
+    // { id: 'communication', label: 'Communication', icon: MessageSquare },
     { id: 'profile', label: 'Profile', icon: UserIcon }
   ];
 
@@ -674,7 +761,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ hideHeader = false }) =
             <h3 className="font-semibold text-gray-900">Add Employee</h3>
             <p className="text-sm text-gray-600">Onboard new team member</p>
           </button>
-        {/* ...existing code... */}
+        {/* Onboarding Modal mount */}
       {/* Add Employee Modal */}
       <Modal isOpen={showAddEmployeeModal} onClose={() => setShowAddEmployeeModal(false)} title="Add New Employee">
         <EmployeeForm
@@ -710,45 +797,28 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ hideHeader = false }) =
 
       {/* Keep UI unchanged: open Employee Directory in modal when Directory quick action is clicked */}
 
-          <button
-            onClick={() => setShowOnboardingModal(true)}
-            className="bg-white p-4 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 text-left"
-          >
-            <Users className="w-8 h-8 text-teal-500 mb-2" />
-            <h3 className="font-semibold text-gray-900">Onboarding</h3>
-            <p className="text-sm text-gray-600">View onboarding pipeline</p>
-          </button>
+          
 
-          <button
-            onClick={() => setShowEmployeeDirectoryModal(true)}
-            className="bg-white p-4 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 text-left"
-          >
-            <FileText className="w-8 h-8 text-lime-500 mb-2" />
-            <h3 className="font-semibold text-gray-900">Directory</h3>
-            <p className="text-sm text-gray-600">Browse employee directory</p>
-          </button>
+          
 
-          <button
-            onClick={() => setShowReportsModal(true)}
+          <Link
+            href="/dashboard/reports"
             className="bg-white p-4 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 text-left"
           >
             <TrendingUp className="w-8 h-8 text-red-500 mb-2" />
             <h3 className="font-semibold text-gray-900">Reports</h3>
-            <p className="text-sm text-gray-600">Generate performance reports</p>
-          </button>
+            <p className="text-sm text-gray-600">Open analytics & exports</p>
+          </Link>
         </div>
 
-      {/* Employee Directory Modal */}
-      <Modal isOpen={showEmployeeDirectoryModal} onClose={() => setShowEmployeeDirectoryModal(false)} title="Employee Directory">
-        <div className="pt-2">
-          <EmployeeList />
-        </div>
-      </Modal>
+      
 
       {/* Reports Modal */}
       <Modal isOpen={showReportsModal} onClose={() => setShowReportsModal(false)} title="Reports">
         <ReportsContent month={now.getMonth() + 1} year={now.getFullYear()} />
       </Modal>
+
+      
 
       {/* Tab Navigation */}
       <div className="bg-white rounded-xl shadow-lg">

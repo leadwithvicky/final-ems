@@ -8,7 +8,7 @@ import Avatar from '@/components/Avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNotification } from '@/contexts/NotificationContext';
 import useSWR from 'swr';
-import { attendanceAPI, leaveAPI } from '@/lib/api';
+import { attendanceAPI, leaveAPI, pollsAPI, payrollAPI } from '@/lib/api';
 import api from '@/lib/api';
 import Modal from '../Modal';
 import toast from 'react-hot-toast';
@@ -43,6 +43,7 @@ const EmployeeDashboard: React.FC = () => {
   const { data: payroll = [], error: payrollError, isLoading: payrollLoading } = useSWR(token ? ['/api/payroll', token] : null, ([url, t]) => fetcher(url, t));
   const { data: leaves = [], error: leavesError, isLoading: leavesLoading, mutate: mutateLeaves } = useSWR(token ? ['/api/leaves/my-leaves', token] : null, ([url, t]) => fetcher(url, t));
   const { data: myProfile, isLoading: profileLoading } = useSWR(token ? ['/api/employees/user/me', token] : null, ([url, t]) => fetcher(url, t));
+  const { data: activePolls = [], mutate: mutateActivePolls } = useSWR(token ? ['/api/polls?status=active', token] : null, ([url, t]) => fetcher(url, t));
 
   const openEdit = async () => {
     try {
@@ -328,6 +329,83 @@ const EmployeeDashboard: React.FC = () => {
                   </div>
                 </div>
 
+                {/* Active Polls */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Active Polls</h3>
+                  <div className="space-y-3">
+                    {activePolls.slice(0, 2).map((poll: any) => (
+                      <div key={poll._id} className="p-4 bg-gray-50 rounded-lg">
+                        <div className="font-medium text-gray-900 mb-2">{poll.question}</div>
+                        <div className="text-xs text-gray-600 mb-2 capitalize">Type: {poll.type}</div>
+                        {poll.hasVoted ? (
+                          <div className="text-sm text-green-700">Already voted</div>
+                        ) : (
+                          poll.type === 'mcq' || poll.type === 'yesno' ? (
+                            <div className="flex flex-wrap gap-2">
+                              {(poll.options || []).map((opt: string) => (
+                                <button
+                                  key={opt}
+                                  className="px-3 py-1 border rounded text-sm hover:bg-white"
+                                  onClick={async()=>{
+                                    try {
+                                      await pollsAPI.vote(poll._id, { answer: opt });
+                                      toast.success('Vote submitted');
+                                      mutateActivePolls();
+                                    } catch (e:any) {
+                                      toast.error(e?.response?.data?.message || 'Failed to vote');
+                                    }
+                                  }}
+                                >{opt}</button>
+                              ))}
+                            </div>
+                          ) : poll.type === 'rating' ? (
+                            <div className="flex items-center gap-2">
+                              {[1,2,3,4,5].map(r => (
+                                <button
+                                  key={r}
+                                  className="px-2 py-1 border rounded text-sm"
+                                  onClick={async()=>{
+                                    try {
+                                      await pollsAPI.vote(poll._id, { answer: r });
+                                      toast.success('Rating submitted');
+                                      mutateActivePolls();
+                                    } catch (e:any) {
+                                      toast.error(e?.response?.data?.message || 'Failed to submit rating');
+                                    }
+                                  }}
+                                >{r}★</button>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="flex gap-2">
+                              <input className="border rounded px-2 py-1 flex-1" placeholder="Your feedback" id={`emp-poll-${poll._id}`} />
+                              <button
+                                className="px-3 py-1 border rounded text-sm hover:bg-white"
+                                onClick={async()=>{
+                                  const el = document.getElementById(`emp-poll-${poll._id}`) as HTMLInputElement | null;
+                                  const val = el?.value || '';
+                                  if (!val.trim()) return;
+                                  try {
+                                    await pollsAPI.vote(poll._id, { answer: val });
+                                    toast.success('Feedback submitted');
+                                    if (el) el.value = '';
+                                    mutateActivePolls();
+                                  } catch (e:any) {
+                                    toast.error(e?.response?.data?.message || 'Failed to submit');
+                                  }
+                                }}
+                              >Submit</button>
+                            </div>
+                          )
+                        )}
+                      </div>
+                    ))}
+                    {activePolls.length === 0 && (
+                      <div className="p-4 bg-gray-50 rounded-lg text-sm text-gray-600">No active polls right now.</div>
+                    )}
+                  </div>
+                </div>
+
                 {/* Recent Leave Requests */}
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Leave Requests</h3>
@@ -577,6 +655,26 @@ const EmployeeDashboard: React.FC = () => {
                             </p>
                           )}
                         </div>
+                      </div>
+                      <div className="mt-3 flex justify-end gap-2">
+                        <button
+                          className="px-3 py-1 border rounded text-sm"
+                          onClick={async()=>{
+                            try {
+                              const blob = await payrollAPI.downloadPayslipPdf(record._id);
+                              const url = window.URL.createObjectURL(blob);
+                              const a = document.createElement('a');
+                              a.href = url;
+                              a.download = `payslip_${record.year}_${record.month}.pdf`;
+                              document.body.appendChild(a);
+                              a.click();
+                              a.remove();
+                              setTimeout(()=> window.URL.revokeObjectURL(url), 5000);
+                            } catch (e:any) {
+                              toast.error(e?.response?.data?.message || 'Failed to download payslip');
+                            }
+                          }}
+                        >Download PDF</button>
                       </div>
                     </div>
                   ))}

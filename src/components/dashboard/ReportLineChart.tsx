@@ -42,17 +42,18 @@ const ReportLineChart: React.FC<ReportLineChartProps> = ({ data }) => {
 
   const options = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: {
         display: true,
-        position: 'top' as const,
+        position: 'bottom' as const,
       },
       title: {
         display: true,
         text: 'Monthly Report Growth',
       },
     },
-  };
+  } as const;
 
   return <Line data={chartData} options={options} />;
 };

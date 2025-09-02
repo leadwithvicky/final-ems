@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import DepartmentEmployeesModal from '../dashboard/DepartmentEmployeesModal';
 import ReportLineChart from './ReportLineChart';
 import { Users, TrendingUp, DollarSign, Building, BarChart3, Shield, Settings, FileText, Calendar, UserPlus, Award, User as UserIcon } from 'lucide-react';
+import Link from 'next/link';
 
 import Layout from '../Layout';
 import Modal from '../Modal';
@@ -427,12 +428,9 @@ const SuperadminDashboard: React.FC = () => {
           <h2 className="text-2xl font-bold mb-4 text-orange-700">Admin Features</h2>
           <div>
             {/* Pass handleGenerateReport to AdminDashboard if needed, or add a Monthly Report button here */}
-            <button
-              className="mb-4 px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 transition"
-              onClick={handleGenerateReport}
-            >
-              Monthly Report
-            </button>
+            <Link href="/dashboard/reports" className="mb-4 inline-block px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 transition">
+              Open Reports
+            </Link>
             <AdminDashboard hideHeader={true} />
           </div>
         </div>
