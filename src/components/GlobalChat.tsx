@@ -26,26 +26,17 @@ export default function GlobalChat() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-  const { user, token } = useAuth(); // Get both user and token separately
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const { user, token } = useAuth();
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const lastMessageCountRef = useRef<number>(0);
+  const [isAtBottom, setIsAtBottom] = useState(true);
+  const [pendingNewCount, setPendingNewCount] = useState(0);
+  const prevScrollTopRef = useRef<number>(0);
 
-  const startPolling = () => {
-    if (pollIntervalRef.current) return;
-    pollIntervalRef.current = setInterval(fetchMessages, 3000);
-  };
-
-  const stopPolling = () => {
-    if (pollIntervalRef.current) {
-      clearInterval(pollIntervalRef.current);
-      pollIntervalRef.current = null;
-    }
-  };
+  // Polling removed – chat uses manual refresh and fetch on open
 
   const fetchMessages = async () => {
-    if (!token || !user) return; // ensure token and user exist
+    if (!token || !user) return;
     
     setError(null);
     const wasLoading = isLoading;
@@ -70,12 +61,28 @@ export default function GlobalChat() {
       
       const data = await res.json();
       if (data.messages) {
-        // Check if there are new messages
-        if (data.messages.length > lastMessageCountRef.current && lastMessageCountRef.current > 0 && !isOpen) {
-          setUnreadCount(prev => prev + (data.messages.length - lastMessageCountRef.current));
+        const newCount = data.messages.length - lastMessageCountRef.current;
+        if (newCount > 0 && lastMessageCountRef.current > 0) {
+          if (!isOpen) {
+            setUnreadCount(prev => prev + newCount);
+          } else if (!isAtBottom) {
+            setPendingNewCount(prev => prev + newCount);
+          }
+        }
+        // Freeze scroll position before updating messages
+        const el = chatContainerRef.current;
+        if (el) {
+          prevScrollTopRef.current = el.scrollTop;
         }
         lastMessageCountRef.current = data.messages.length;
         setMessages(data.messages);
+        // Restore previous scrollTop after DOM updates
+        requestAnimationFrame(() => {
+          const container = chatContainerRef.current;
+          if (container) {
+            container.scrollTop = prevScrollTopRef.current;
+          }
+        });
       }
     } catch (err) {
       console.error('Fetch messages failed', err);
@@ -87,10 +94,7 @@ export default function GlobalChat() {
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("function called: sendMessage");
     if (!newMessage.trim() || isSending || !token || !user) return;
-    console.log('Sending message:', newMessage);
-    console.log(user, token);
 
     setIsSending(true);
     setError(null);
@@ -112,10 +116,20 @@ export default function GlobalChat() {
 
       if (res.ok) {
         const data = await res.json();
+        // Freeze scroll position before appending
+        const el = chatContainerRef.current;
+        if (el) {
+          prevScrollTopRef.current = el.scrollTop;
+        }
         setMessages(prev => [...prev, data.message]);
         setNewMessage('');
-        // Force immediate fetch to get any other new messages
-        fetchMessages();
+        // Restore previous scrollTop after DOM updates
+        requestAnimationFrame(() => {
+          const container = chatContainerRef.current;
+          if (container) {
+            container.scrollTop = prevScrollTopRef.current;
+          }
+        });
       } else {
         const errorData = await res.json();
         setError(errorData.error || 'Failed to send message');
@@ -130,37 +144,33 @@ export default function GlobalChat() {
 
   const handleOpenChat = () => {
     setIsOpen(true);
-    setUnreadCount(0); // Reset unread count when opening chat
+    setUnreadCount(0);
+    setPendingNewCount(0);
+    // Removed setIsAtBottom(true);
+    // One-time fetch when opening the chat
+    fetchMessages();
   };
 
-  useEffect(() => {
-    if (!token || !user) return;
-    if (isOpen) {
-      fetchMessages();
-      startPolling();
-    } else {
-      stopPolling();
-    }
-    return () => stopPolling();
-  }, [token, user, isOpen]);
+  // Removed polling and visibility-driven polling
 
   useEffect(() => {
-    const handleVisibility = () => {
-      if (document.hidden) {
-        stopPolling();
-      } else if (isOpen) {
-        startPolling();
+    if (!isOpen) return;
+    const el = chatContainerRef.current;
+    if (!el) return;
+
+    const handleScroll = () => {
+      const threshold = 4;
+      const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - threshold;
+      setIsAtBottom(atBottom);
+      if (atBottom && pendingNewCount > 0) {
+        setPendingNewCount(0);
       }
     };
-    document.addEventListener('visibilitychange', handleVisibility);
-    return () => document.removeEventListener('visibilitychange', handleVisibility);
-  }, [isOpen]);
 
-  useEffect(() => {
-    if (isOpen && messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [messages, isOpen]);
+    el.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+    return () => el.removeEventListener('scroll', handleScroll);
+  }, [isOpen, pendingNewCount]);
 
   const getRoleColor = (role: string) => {
     switch (role) {
@@ -191,10 +201,19 @@ export default function GlobalChat() {
               <img src="/globe.svg" alt="Global" className="w-5 h-5 mr-2" />
               <span className="font-medium">Organization Chat</span>
             </div>
-            <button onClick={() => setIsOpen(false)} className="text-xl font-bold hover:bg-blue-700 w-6 h-6 flex items-center justify-center rounded">×</button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={fetchMessages}
+                className="text-xs px-2 py-1 rounded bg-white/10 hover:bg-white/20"
+                title="Refresh messages"
+              >
+                Refresh
+              </button>
+              <button onClick={() => setIsOpen(false)} className="text-xl font-bold hover:bg-blue-700 w-6 h-6 flex items-center justify-center rounded">×</button>
+            </div>
           </div>
           
-          <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-3 space-y-3 bg-gray-50">
+          <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-3 space-y-3 bg-gray-50 relative">
             {error && (
               <div className="bg-red-100 border border-red-400 text-red-700 px-3 py-2 rounded text-sm">
                 {error}
@@ -256,7 +275,19 @@ export default function GlobalChat() {
                 </div>
               );
             })}
-            <div ref={messagesEndRef} />
+            {/*
+              Removed the jump-to-latest button here since it scrolls on click
+              If you want to keep it but without scroll, uncomment and keep button without scroll logic
+            */}
+            {/* !isAtBottom && pendingNewCount > 0 && (
+              <button
+                type="button"
+                onClick={() => { setPendingNewCount(0); }}
+                className="absolute bottom-3 right-3 px-3 py-1 rounded-full bg-blue-600 text-white text-xs shadow hover:bg-blue-700"
+              >
+                {pendingNewCount} new message{pendingNewCount > 1 ? 's' : ''} • Jump to latest
+              </button>
+            ) */}
           </div>
           
           <form onSubmit={sendMessage} className="p-3 border-t flex space-x-2 bg-white">
@@ -269,8 +300,7 @@ export default function GlobalChat() {
               disabled={isSending}
             />
             <button
-              type="button"
-              onClick={sendMessage}
+              type="submit"
               disabled={isSending || !newMessage.trim()}
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 text-sm flex items-center"
             >

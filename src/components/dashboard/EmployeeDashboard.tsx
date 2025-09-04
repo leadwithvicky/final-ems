@@ -189,13 +189,13 @@ const EmployeeDashboard: React.FC = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'approved':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200';
       case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-200';
       case 'rejected':
-        return 'bg-red-100 text-red-800';
+        return 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
     }
   };
 
@@ -225,11 +225,11 @@ const EmployeeDashboard: React.FC = () => {
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {stats.map((stat, index) => (
-            <div key={index} className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300">
+            <div key={index} className="card p-6 hover:shadow-xl transition-shadow duration-300">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">{stat.label}</p>
-                  <p className="text-2xl font-bold text-gray-800">{stat.value}</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">{stat.label}</p>
+                  <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">{stat.value}</p>
                 </div>
                 <div className={`p-3 rounded-full bg-gradient-to-r ${stat.color}`}>
                   <stat.icon className="w-6 h-6 text-white" />
@@ -240,8 +240,8 @@ const EmployeeDashboard: React.FC = () => {
         </div>
 
         {/* Tab Navigation */}
-        <div className="bg-white rounded-xl shadow-lg">
-          <div className="border-b border-gray-200">
+        <div className="card">
+          <div className="border-b border-gray-200 dark:border-gray-800">
             <nav className="flex space-x-8 px-6">
               {tabs.map((tab) => (
                 <button
@@ -249,8 +249,8 @@ const EmployeeDashboard: React.FC = () => {
                   onClick={() => setSelectedTab(tab.id)}
                   className={`flex items-center space-x-2 py-4 border-b-2 font-medium text-sm transition-colors ${
                     selectedTab === tab.id
-                      ? 'border-teal-500 text-teal-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700'
+                      ? 'border-teal-500 text-teal-600 dark:text-teal-400'
+                      : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
                   }`}
                 >
                   <tab.icon className="w-4 h-4" />
@@ -306,23 +306,23 @@ const EmployeeDashboard: React.FC = () => {
 
                 {/* Recent Tasks */}
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Tasks</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Recent Tasks</h3>
                   <div className="space-y-3">
                     {tasks.slice(0, 5).map((task: any, index: number) => (
-                      <div key={task._id || index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                      <div key={task._id || index} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
                         <div>
-                          <p className="font-medium text-gray-900">{task.title}</p>
-                          <p className="text-sm text-gray-600">Due: {new Date(task.dueDate).toLocaleDateString()}</p>
+                          <p className="font-medium text-gray-900 dark:text-gray-100">{task.title}</p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">Due: {new Date(task.dueDate).toLocaleDateString()}</p>
                         </div>
                         <div className="flex items-center space-x-2">
                           <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            task.status === 'completed' ? 'bg-green-100 text-green-800' :
-                            task.status === 'in-progress' ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-gray-100 text-gray-800'
+                            task.status === 'completed' ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200' :
+                            task.status === 'in-progress' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-200' :
+                            'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
                           }`}>
                             {task.status}
                           </span>
-                          <span className="text-sm text-gray-600">{task.progress}%</span>
+                          <span className="text-sm text-gray-600 dark:text-gray-400">{task.progress}%</span>
                         </div>
                       </div>
                     ))}
@@ -331,21 +331,21 @@ const EmployeeDashboard: React.FC = () => {
 
                 {/* Active Polls */}
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Active Polls</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Active Polls</h3>
                   <div className="space-y-3">
                     {activePolls.slice(0, 2).map((poll: any) => (
-                      <div key={poll._id} className="p-4 bg-gray-50 rounded-lg">
-                        <div className="font-medium text-gray-900 mb-2">{poll.question}</div>
-                        <div className="text-xs text-gray-600 mb-2 capitalize">Type: {poll.type}</div>
+                      <div key={poll._id} className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <div className="font-medium text-gray-900 dark:text-gray-100 mb-2">{poll.question}</div>
+                        <div className="text-xs text-gray-600 dark:text-gray-400 mb-2 capitalize">Type: {poll.type}</div>
                         {poll.hasVoted ? (
-                          <div className="text-sm text-green-700">Already voted</div>
+                          <div className="text-sm text-green-700 dark:text-green-400">Already voted</div>
                         ) : (
                           poll.type === 'mcq' || poll.type === 'yesno' ? (
                             <div className="flex flex-wrap gap-2">
                               {(poll.options || []).map((opt: string) => (
                                 <button
                                   key={opt}
-                                  className="px-3 py-1 border rounded text-sm hover:bg-white"
+                                  className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm hover:bg-white dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
                                   onClick={async()=>{
                                     try {
                                       await pollsAPI.vote(poll._id, { answer: opt });
@@ -363,7 +363,7 @@ const EmployeeDashboard: React.FC = () => {
                               {[1,2,3,4,5].map(r => (
                                 <button
                                   key={r}
-                                  className="px-2 py-1 border rounded text-sm"
+                                  className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700"
                                   onClick={async()=>{
                                     try {
                                       await pollsAPI.vote(poll._id, { answer: r });
@@ -378,9 +378,9 @@ const EmployeeDashboard: React.FC = () => {
                             </div>
                           ) : (
                             <div className="flex gap-2">
-                              <input className="border rounded px-2 py-1 flex-1" placeholder="Your feedback" id={`emp-poll-${poll._id}`} />
+                              <input className="input flex-1" placeholder="Your feedback" id={`emp-poll-${poll._id}`} />
                               <button
-                                className="px-3 py-1 border rounded text-sm hover:bg-white"
+                                className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm hover:bg-white dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
                                 onClick={async()=>{
                                   const el = document.getElementById(`emp-poll-${poll._id}`) as HTMLInputElement | null;
                                   const val = el?.value || '';
@@ -401,27 +401,27 @@ const EmployeeDashboard: React.FC = () => {
                       </div>
                     ))}
                     {activePolls.length === 0 && (
-                      <div className="p-4 bg-gray-50 rounded-lg text-sm text-gray-600">No active polls right now.</div>
+                      <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg text-sm text-gray-600 dark:text-gray-400">No active polls right now.</div>
                     )}
                   </div>
                 </div>
 
                 {/* Recent Leave Requests */}
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Leave Requests</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Recent Leave Requests</h3>
                   <div className="space-y-3">
                     {leaves.slice(0, 3).map((leave: any, index: number) => (
-                      <div key={leave._id || index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                      <div key={leave._id || index} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
                         <div>
-                          <p className="font-medium text-gray-900">{leave.leaveType}</p>
-                          <p className="text-sm text-gray-600">
+                          <p className="font-medium text-gray-900 dark:text-gray-100">{leave.leaveType}</p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
                             {new Date(leave.startDate).toLocaleDateString()} - {new Date(leave.endDate).toLocaleDateString()}
                           </p>
                           {leave.reason && (
-                            <p className="text-sm text-gray-600">Reason: {leave.reason}</p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">Reason: {leave.reason}</p>
                           )}
                           {leave.comments && (
-                            <p className="text-sm text-gray-600">Admin Note: {leave.comments}</p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">Admin Note: {leave.comments}</p>
                           )}
                         </div>
                         <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(leave.status)}`}>
@@ -436,25 +436,25 @@ const EmployeeDashboard: React.FC = () => {
 
             {selectedTab === 'attendance' && (
               <div className="space-y-6">
-                <h3 className="text-lg font-semibold text-gray-900">Attendance History</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Attendance History</h3>
                 <div className="space-y-3">
                   {attendance.slice(0, 10).map((record: any, index: number) => (
-                    <div key={record._id || index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div key={record._id || index} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
                       <div>
-                        <p className="font-medium text-gray-900">{new Date(record.date).toLocaleDateString()}</p>
-                        <p className="text-sm text-gray-600">
+                        <p className="font-medium text-gray-900 dark:text-gray-100">{new Date(record.date).toLocaleDateString()}</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
                           {record.clockIn && `In: ${new Date(record.clockIn).toLocaleTimeString()}`}
                           {record.clockOut && ` • Out: ${new Date(record.clockOut).toLocaleTimeString()}`}
                         </p>
                         {record.totalHours && (
-                          <p className="text-sm text-gray-600">Total: {record.totalHours} hours</p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">Total: {record.totalHours} hours</p>
                         )}
                       </div>
                       <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        record.status === 'present' ? 'bg-green-100 text-green-800' :
-                        record.status === 'late' ? 'bg-yellow-100 text-yellow-800' :
-                        record.status === 'absent' ? 'bg-red-100 text-red-800' :
-                        'bg-gray-100 text-gray-800'
+                        record.status === 'present' ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200' :
+                        record.status === 'late' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-200' :
+                        record.status === 'absent' ? 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200' :
+                        'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
                       }`}>
                         {record.status}
                       </span>
@@ -466,35 +466,35 @@ const EmployeeDashboard: React.FC = () => {
 
             {selectedTab === 'tasks' && (
               <div className="space-y-6">
-                <h3 className="text-lg font-semibold text-gray-900">My Tasks</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">My Tasks</h3>
                 <div className="space-y-3">
                   {tasks.map((task: any, index: number) => (
-                    <div key={task._id || index} className="p-4 bg-gray-50 rounded-lg">
+                    <div key={task._id || index} className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
                       <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-medium text-gray-900">{task.title}</h4>
+                        <h4 className="font-medium text-gray-900 dark:text-gray-100">{task.title}</h4>
                         <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                          task.priority === 'urgent' ? 'bg-red-100 text-red-800' :
-                          task.priority === 'high' ? 'bg-orange-100 text-orange-800' :
-                          task.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-green-100 text-green-800'
+                          task.priority === 'urgent' ? 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200' :
+                          task.priority === 'high' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-200' :
+                          task.priority === 'medium' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-200' :
+                          'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200'
                         }`}>
                           {task.priority}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-600 mb-3">{task.description}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{task.description}</p>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-4">
-                          <span className="text-sm text-gray-600">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">
                             Due: {new Date(task.dueDate).toLocaleDateString()}
                           </span>
-                          <span className="text-sm text-gray-600">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">
                             Progress: {task.progress}%
                           </span>
                         </div>
                         <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                          task.status === 'completed' ? 'bg-green-100 text-green-800' :
-                          task.status === 'in-progress' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-gray-100 text-gray-800'
+                          task.status === 'completed' ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200' :
+                          task.status === 'in-progress' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-200' :
+                          'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
                         }`}>
                           {task.status}
                         </span>
@@ -508,24 +508,24 @@ const EmployeeDashboard: React.FC = () => {
             {selectedTab === 'leaves' && (
               <div className="space-y-6">
                 <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-semibold text-gray-900">Leave Management</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Leave Management</h3>
                   <button onClick={() => setShowRequestLeaveModal(true)} className="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors">
                     Request Leave
                   </button>
                 </div>
                 <div className="space-y-3">
                   {leaves.map((leave: any, index: number) => (
-                    <div key={leave._id || index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div key={leave._id || index} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
                       <div>
-                                                 <p className="font-medium text-gray-900">{leave.leaveType}</p>
-                        <p className="text-sm text-gray-600">
+                        <p className="font-medium text-gray-900 dark:text-gray-100">{leave.leaveType}</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
                           {new Date(leave.startDate).toLocaleDateString()} - {new Date(leave.endDate).toLocaleDateString()}
                         </p>
                         {leave.reason && (
-                          <p className="text-sm text-gray-600">Reason: {leave.reason}</p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">Reason: {leave.reason}</p>
                         )}
                         {leave.comments && (
-                          <p className="text-sm text-gray-600">Admin Note: {leave.comments}</p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">Admin Note: {leave.comments}</p>
                         )}
                       </div>
                       <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(leave.status)}`}>
@@ -565,9 +565,9 @@ const EmployeeDashboard: React.FC = () => {
                   >
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-sm text-gray-700 mb-1">Leave Type</label>
+                        <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Leave Type</label>
                         <select
-                          className="border rounded px-2 py-1 w-full"
+                          className="input"
                           value={leaveForm.type}
                           onChange={e => setLeaveForm(f => ({ ...f, type: e.target.value }))}
                           required
@@ -581,29 +581,29 @@ const EmployeeDashboard: React.FC = () => {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-sm text-gray-700 mb-1">Start Date</label>
+                        <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Start Date</label>
                         <input
                           type="date"
-                          className="border rounded px-2 py-1 w-full"
+                          className="input"
                           value={leaveForm.startDate}
                           onChange={e => setLeaveForm(f => ({ ...f, startDate: e.target.value }))}
                           required
                         />
                       </div>
                       <div>
-                        <label className="block text-sm text-gray-700 mb-1">End Date</label>
+                        <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">End Date</label>
                         <input
                           type="date"
-                          className="border rounded px-2 py-1 w-full"
+                          className="input"
                           value={leaveForm.endDate}
                           onChange={e => setLeaveForm(f => ({ ...f, endDate: e.target.value }))}
                           required
                         />
                       </div>
                       <div className="md:col-span-2">
-                        <label className="block text-sm text-gray-700 mb-1">Reason</label>
+                        <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Reason</label>
                         <textarea
-                          className="border rounded px-2 py-1 w-full"
+                          className="input"
                           rows={4}
                           placeholder="Provide sufficient details for approval"
                           value={leaveForm.reason}
@@ -611,11 +611,11 @@ const EmployeeDashboard: React.FC = () => {
                           required
                           maxLength={500}
                         />
-                        <p className="text-xs text-gray-500 mt-1">Max 500 characters.</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Max 500 characters.</p>
                       </div>
                     </div>
                     <div className="mt-4 flex justify-end gap-2">
-                      <button type="button" onClick={() => setShowRequestLeaveModal(false)} className="px-3 py-1 rounded border">Cancel</button>
+                      <button type="button" onClick={() => setShowRequestLeaveModal(false)} className="px-3 py-1 rounded border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300">Cancel</button>
                       <button type="submit" disabled={requestingLeave} className={`px-3 py-1 rounded text-white ${requestingLeave ? 'bg-teal-400' : 'bg-teal-600 hover:bg-teal-700'}`}>{requestingLeave ? 'Submitting...' : 'Submit Request'}</button>
                     </div>
                   </form>
@@ -658,7 +658,7 @@ const EmployeeDashboard: React.FC = () => {
                       </div>
                       <div className="mt-3 flex justify-end gap-2">
                         <button
-                          className="px-3 py-1 border dark:border-gray-700 rounded text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700"
+                          className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700"
                           onClick={async()=>{
                             try {
                               const blob = await payrollAPI.downloadPayslipPdf(record._id);
@@ -684,7 +684,7 @@ const EmployeeDashboard: React.FC = () => {
 
             {selectedTab === 'profile' && (
               <div className="space-y-6">
-                <h3 className="text-lg font-semibold text-gray-900">Profile Information</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Profile Information</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <AvatarUploader
@@ -697,30 +697,30 @@ const EmployeeDashboard: React.FC = () => {
                   </div>
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Full Name</label>
-                      <p className="mt-1 text-sm text-gray-900">{user.name}</p>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Full Name</label>
+                      <p className="mt-1 text-sm text-gray-900 dark:text-gray-100">{user.name}</p>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Email</label>
-                      <p className="mt-1 text-sm text-gray-900">{user.email}</p>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+                      <p className="mt-1 text-sm text-gray-900 dark:text-gray-100">{user.email}</p>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Role</label>
-                      <p className="mt-1 text-sm text-gray-900 capitalize">{user.role}</p>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Role</label>
+                      <p className="mt-1 text-sm text-gray-900 dark:text-gray-100 capitalize">{user.role}</p>
                     </div>
                   </div>
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Department</label>
-                      <p className="mt-1 text-sm text-gray-900">Engineering</p>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Department</label>
+                      <p className="mt-1 text-sm text-gray-900 dark:text-gray-100">Engineering</p>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Position</label>
-                      <p className="mt-1 text-sm text-gray-900">Software Developer</p>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Position</label>
+                      <p className="mt-1 text-sm text-gray-900 dark:text-gray-100">Software Developer</p>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Employee ID</label>
-                      <p className="mt-1 text-sm text-gray-900">{(user as any).employeeId || 'EMP123456'}</p>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Employee ID</label>
+                      <p className="mt-1 text-sm text-gray-900 dark:text-gray-100">{(user as any).employeeId || 'EMP123456'}</p>
                     </div>
                   </div>
                 </div>
@@ -730,19 +730,19 @@ const EmployeeDashboard: React.FC = () => {
 
                 {isEditOpen && (
                   <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg shadow-xl w-full max-w-lg p-6">
-                      <h4 className="text-lg font-semibold mb-4">Edit Profile</h4>
+                    <div className="card w-full max-w-lg p-6">
+                      <h4 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Edit Profile</h4>
                       <div className="grid grid-cols-2 gap-3">
-                        <input className="border rounded px-2 py-1" placeholder="First Name" value={profileForm.firstName} onChange={e=>setProfileForm(f=>({...f, firstName:e.target.value}))} />
-                        <input className="border rounded px-2 py-1" placeholder="Last Name" value={profileForm.lastName} onChange={e=>setProfileForm(f=>({...f, lastName:e.target.value}))} />
-                        <input className="border rounded px-2 py-1 col-span-2" placeholder="Email" type="email" value={profileForm.email} onChange={e=>setProfileForm(f=>({...f, email:e.target.value}))} />
-                        <input className="border rounded px-2 py-1 col-span-2" placeholder="Phone (optional)" value={profileForm.phone} onChange={e=>setProfileForm(f=>({...f, phone:e.target.value}))} />
-                        <input className="border rounded px-2 py-1" placeholder="Department" value={profileForm.department} onChange={e=>setProfileForm(f=>({...f, department:e.target.value}))} />
-                        <input className="border rounded px-2 py-1" placeholder="Position" value={profileForm.position} onChange={e=>setProfileForm(f=>({...f, position:e.target.value}))} />
+                        <input className="input" placeholder="First Name" value={profileForm.firstName} onChange={e=>setProfileForm(f=>({...f, firstName:e.target.value}))} />
+                        <input className="input" placeholder="Last Name" value={profileForm.lastName} onChange={e=>setProfileForm(f=>({...f, lastName:e.target.value}))} />
+                        <input className="input col-span-2" placeholder="Email" type="email" value={profileForm.email} onChange={e=>setProfileForm(f=>({...f, email:e.target.value}))} />
+                        <input className="input col-span-2" placeholder="Phone (optional)" value={profileForm.phone} onChange={e=>setProfileForm(f=>({...f, phone:e.target.value}))} />
+                        <input className="input" placeholder="Department" value={profileForm.department} onChange={e=>setProfileForm(f=>({...f, department:e.target.value}))} />
+                        <input className="input" placeholder="Position" value={profileForm.position} onChange={e=>setProfileForm(f=>({...f, position:e.target.value}))} />
                       </div>
-                      {saveError && <div className="text-red-600 text-sm mt-2">{saveError}</div>}
+                      {saveError && <div className="text-red-600 dark:text-red-400 text-sm mt-2">{saveError}</div>}
                       <div className="mt-4 flex justify-end gap-2">
-                        <button onClick={()=>setIsEditOpen(false)} className="px-3 py-1 rounded border">Cancel</button>
+                        <button onClick={()=>setIsEditOpen(false)} className="px-3 py-1 rounded border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300">Cancel</button>
                         <button onClick={saveProfile} disabled={saving} className={`px-3 py-1 rounded text-white ${saving? 'bg-teal-400':'bg-teal-600 hover:bg-teal-700'}`}>{saving? 'Saving...':'Save'}</button>
                       </div>
                     </div>
@@ -753,19 +753,19 @@ const EmployeeDashboard: React.FC = () => {
 
             {selectedTab === 'directory' && (
               <div className="space-y-6">
-                <h3 className="text-lg font-semibold text-gray-900">Employee Directory</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Employee Directory</h3>
                 <div className="space-y-3">
                   {directory.map((person, index) => (
-                    <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div key={index} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
                       <div className="flex items-center gap-2">
                         <Avatar name={person.name} size={24} />
                         <div>
-                          <p className="font-medium text-gray-900">{person.name}</p>
-                          <p className="text-sm text-gray-600">{person.role} • {person.dept}</p>
+                          <p className="font-medium text-gray-900 dark:text-gray-100">{person.name}</p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">{person.role} • {person.dept}</p>
                         </div>
                       </div>
                       <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        person.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                        person.status === 'Active' ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-200'
                       }`}>
                         {person.status}
                       </span>
