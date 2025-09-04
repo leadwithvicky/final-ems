@@ -83,17 +83,17 @@ const ReportsPage: React.FC = () => {
         <p className="text-orange-100">Filter and export insights across attendance, leaves, payroll, and engagement.</p>
       </div>
 
-      <div className="bg-white rounded-xl shadow-lg p-4 space-y-4">
+      <div className="card p-4 space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
-        <input className="border rounded px-3 py-2" type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
-        <input className="border rounded px-3 py-2" type="date" value={endDate} onChange={e => setEndDate(e.target.value)} />
-        <select className="border rounded px-3 py-2" value={department} onChange={e => setDepartment(e.target.value)}>
+        <input className="input" type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
+        <input className="input" type="date" value={endDate} onChange={e => setEndDate(e.target.value)} />
+        <select className="input" value={department} onChange={e => setDepartment(e.target.value)}>
           <option value="">All Departments</option>
           {departments.map((d) => <option key={d} value={d}>{d}</option>)}
         </select>
-        <input className="border rounded px-3 py-2" placeholder="Team (Position)" value={team} onChange={e => setTeam(e.target.value)} />
+        <input className="input" placeholder="Team (Position)" value={team} onChange={e => setTeam(e.target.value)} />
         <button
-          className="border rounded px-3 py-2 hover:bg-gray-50"
+          className="px-3 py-2 border dark:border-gray-700 rounded text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800"
           onClick={async () => {
             const blob = await reportsAPI.exportCsv('/reports/attendance', params);
             const url = URL.createObjectURL(blob);
@@ -102,7 +102,7 @@ const ReportsPage: React.FC = () => {
           }}
         >Export Attendance CSV</button>
         <button
-          className="border rounded px-3 py-2 hover:bg-gray-50"
+          className="px-3 py-2 border dark:border-gray-700 rounded text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800"
           onClick={async () => {
             const blob = await reportsAPI.exportCsv('/reports/leaves', params);
             const url = URL.createObjectURL(blob);
@@ -112,7 +112,7 @@ const ReportsPage: React.FC = () => {
         >Export Leaves CSV</button>
         </div>
 
-        <div className="border-b border-gray-200 mt-2">
+        <div className="border-b border-gray-200 dark:border-gray-800 mt-2">
           <nav className="flex flex-wrap gap-4">
             {([
               { id: 'attendance', label: 'Attendance' },
@@ -123,7 +123,7 @@ const ReportsPage: React.FC = () => {
               <button
                 key={t.id}
                 onClick={() => setSelectedTab(t.id)}
-                className={`py-2 px-2 border-b-2 text-sm font-medium ${selectedTab === t.id ? 'border-orange-500 text-orange-600' : 'border-transparent text-gray-600 hover:text-gray-800'}`}
+                className={`py-2 px-2 border-b-2 text-sm font-medium ${selectedTab === t.id ? 'border-orange-500 text-orange-600' : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'}`}
               >{t.label}</button>
             ))}
           </nav>
@@ -135,12 +135,12 @@ const ReportsPage: React.FC = () => {
       {/* 1. Attendance */}
       {selectedTab === 'attendance' && (
       <section className="space-y-3">
-        <div className="bg-white rounded-xl shadow-lg p-4">
-        <h3 className="text-lg font-medium">Attendance Reports</h3>
+        <div className="card p-4">
+        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Attendance Reports</h3>
         {attendance && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="border rounded p-3">
-              <h4 className="font-medium mb-2">Days Present vs Absent</h4>
+            <div className="card p-3">
+              <h4 className="font-medium mb-2 text-gray-900 dark:text-gray-100">Days Present vs Absent</h4>
               <div className="h-64">
                 <ReportLineChart data={{
                   labels: attendance.daily.map((d: any) => d._id.d),
@@ -148,14 +148,14 @@ const ReportsPage: React.FC = () => {
                 }} />
               </div>
             </div>
-            <div className="border rounded p-3">
-              <h4 className="font-medium mb-2">Attendance Heatmap</h4>
+            <div className="card p-3">
+              <h4 className="font-medium mb-2 text-gray-900 dark:text-gray-100">Attendance Heatmap</h4>
               <Heatmap days={attendance.daily.map((d: any) => ({ date: d._id.d, present: d.present, absent: d.absent }))} />
             </div>
-            <div className="border rounded p-3">
-              <h4 className="font-medium mb-2">Employee-wise Summary</h4>
+            <div className="card p-3">
+              <h4 className="font-medium mb-2 text-gray-900 dark:text-gray-100">Employee-wise Summary</h4>
               <div className="max-h-72 overflow-auto text-sm">
-                <table className="w-full">
+                <table className="table w-full">
                   <thead>
                     <tr className="text-left">
                       <th className="py-1">Employee</th>
@@ -167,7 +167,7 @@ const ReportsPage: React.FC = () => {
                   </thead>
                   <tbody>
                     {attendance.employees.map((e: any) => (
-                      <tr key={e.employeeId} className="border-t">
+                      <tr key={e.employeeId} className="border-t border-gray-200 dark:border-gray-800">
                         <td className="py-1">{e.name}</td>
                         <td className="py-1">{e.presentDays}</td>
                         <td className="py-1">{e.absentDays}</td>

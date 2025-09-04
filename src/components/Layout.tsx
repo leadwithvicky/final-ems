@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Users, LogOut, User, MessageCircle, Globe } from 'lucide-react';
+import ThemeToggle from '@/components/ThemeToggle';
 import Avatar from '@/components/Avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatDistanceToNow } from 'date-fns';
@@ -176,24 +177,25 @@ const Layout: React.FC<LayoutProps> = ({ title, children, user, onLogout }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 relative">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 relative">
       {/* Header */}
-      <header className="bg-white shadow-sm">
+      <header className="bg-white dark:bg-gray-950 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <div className="flex items-center">
               <Users className="h-8 w-8 text-indigo-600" />
-              <h1 className="ml-2 text-2xl font-bold text-gray-900">{title}</h1>
+              <h1 className="ml-2 text-2xl font-bold text-gray-900 dark:text-gray-100">{title}</h1>
             </div>
             <div className="flex items-center space-x-4">
-              <div className="flex items-center text-gray-700">
+              <ThemeToggle />
+              <div className="flex items-center text-gray-700 dark:text-gray-200">
                 <Avatar src={user.avatarUrl} updatedAt={user.avatarUpdatedAt} name={user.name} size={28} className="mr-2" />
                 <span>{user.name}</span>
-                <span className="ml-2 text-sm text-gray-500 capitalize">({user.role})</span>
+                <span className="ml-2 text-sm text-gray-500 dark:text-gray-400 capitalize">({user.role})</span>
               </div>
               <button
                 onClick={onLogout}
-                className="flex items-center text-gray-700 hover:text-red-600 transition-colors"
+                className="flex items-center text-gray-700 dark:text-gray-200 hover:text-red-600 transition-colors"
               >
                 <LogOut className="h-5 w-5 mr-2" />
                 Logout
@@ -204,7 +206,7 @@ const Layout: React.FC<LayoutProps> = ({ title, children, user, onLogout }) => {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-gray-900 dark:text-gray-100">
         {children}
       </main>
 
@@ -223,7 +225,7 @@ const Layout: React.FC<LayoutProps> = ({ title, children, user, onLogout }) => {
 
       {/* Chat Window */}
       {isChatOpen && (
-        <div className="fixed bottom-20 right-6 w-96 h-[500px] bg-white border rounded-xl shadow-lg flex flex-col">
+        <div className="fixed bottom-20 right-6 w-96 h-[500px] bg-white dark:bg-gray-900 border dark:border-gray-800 rounded-xl shadow-lg flex flex-col">
           <div className="bg-indigo-600 text-white p-3 flex justify-between items-center rounded-t-xl">
             <span className="font-bold">Global Chat</span>
             <button onClick={toggleChat} className="hover:bg-indigo-700 rounded-full h-6 w-6 flex items-center justify-center">✖</button>
@@ -231,7 +233,7 @@ const Layout: React.FC<LayoutProps> = ({ title, children, user, onLogout }) => {
           
           <div 
             ref={chatContainerRef}
-            className="flex-1 overflow-y-auto p-3 space-y-3 bg-gray-50"
+            className="flex-1 overflow-y-auto p-3 space-y-3 bg-gray-50 dark:bg-gray-950"
           >
             {isLoading && messages.length === 0 ? (
               <div className="flex justify-center items-center h-full">
@@ -248,7 +250,7 @@ const Layout: React.FC<LayoutProps> = ({ title, children, user, onLogout }) => {
                 </button>
               </div>
             ) : messages.length === 0 ? (
-              <div className="text-center py-10 text-gray-500">
+              <div className="text-center py-10 text-gray-500 dark:text-gray-400">
                 <p className="text-4xl mb-2">😊</p>
                 <p>No messages yet. Start the conversation!</p>
               </div>
@@ -269,7 +271,7 @@ const Layout: React.FC<LayoutProps> = ({ title, children, user, onLogout }) => {
                       key={msg._id} 
                       className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'}`}
                     >
-                      <div className={`max-w-[80%] ${isCurrentUser ? 'bg-indigo-100' : 'bg-white'} p-3 rounded-lg shadow-sm
+                      <div className={`max-w-[80%] ${isCurrentUser ? 'bg-indigo-100' : 'bg-white dark:bg-gray-800'} p-3 rounded-lg shadow-sm
                         ${isCurrentUser ? 'rounded-tr-none' : 'rounded-tl-none'}`}
                       >
                         {!isCurrentUser && showSenderName && (
@@ -289,7 +291,7 @@ const Layout: React.FC<LayoutProps> = ({ title, children, user, onLogout }) => {
                         <div className="whitespace-pre-wrap break-words text-sm">
                           {msg.message}
                         </div>
-                        <div className={`text-xs text-gray-500 mt-1 ${isCurrentUser ? 'text-right' : ''}`}>
+                        <div className={`text-xs text-gray-500 dark:text-gray-400 mt-1 ${isCurrentUser ? 'text-right' : ''}`}>
                           {formatDistanceToNow(new Date(msg.timestamp), { addSuffix: true })}
                         </div>
                       </div>
@@ -301,13 +303,13 @@ const Layout: React.FC<LayoutProps> = ({ title, children, user, onLogout }) => {
             )}
           </div>
           
-          <form onSubmit={sendMessage} className="p-3 border-t flex">
+          <form onSubmit={sendMessage} className="p-3 border-t dark:border-gray-800 flex">
             <input
               type="text"
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               placeholder="Type a message..."
-              className="flex-1 border rounded-l-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+              className="flex-1 border dark:border-gray-700 dark:bg-gray-900 rounded-l-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
               disabled={isSending}
             />
             <button 

@@ -211,20 +211,20 @@ const SuperadminDashboard: React.FC = () => {
         <Modal isOpen={showTargetModal} onClose={() => setShowTargetModal(false)} title="Set Performance Targets">
           <div className="flex flex-col gap-4 p-2">
             <div className="flex flex-col">
-              <label className="text-sm text-gray-700 font-semibold mb-1">Target Revenue (monthly)</label>
+              <label className="text-sm text-gray-700 dark:text-gray-300 font-semibold mb-1">Target Revenue (monthly)</label>
               <input
                 type="number"
-                className="rounded px-2 py-1 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                className="input"
                 value={targetRevenue}
                 onChange={e => setTargetRevenue(Number(e.target.value))}
                 min={0}
               />
             </div>
             <div className="flex flex-col">
-              <label className="text-sm text-gray-700 font-semibold mb-1">Target Number of Students</label>
+              <label className="text-sm text-gray-700 dark:text-gray-300 font-semibold mb-1">Target Number of Students</label>
               <input
                 type="number"
-                className="rounded px-2 py-1 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                className="input"
                 value={targetNumStudents}
                 onChange={e => setTargetNumStudents(Number(e.target.value))}
                 min={0}
@@ -246,15 +246,15 @@ const SuperadminDashboard: React.FC = () => {
               return (
                 <button
                   key={index}
-                  className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300 w-full text-left focus:outline-none"
+                  className="card p-6 hover:shadow-xl transition-shadow duration-300 w-full text-left focus:outline-none"
                   onClick={() => setShowDepartmentsModal(true)}
                   title="View by department"
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-gray-600 mb-1">{stat.label}</p>
-                      <p className="text-2xl font-bold text-gray-800">{stat.value}</p>
-                      <p className="text-sm text-green-600">{stat.change} from last month</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">{stat.label}</p>
+                      <p className="text-2xl font-bold text-gray-800 dark:text-gray-200">{stat.value}</p>
+                      <p className="text-sm text-green-600 dark:text-green-400">{stat.change} from last month</p>
                     </div>
                     <div className={`p-3 rounded-full bg-gradient-to-r ${stat.color}`}>
                       <stat.icon className="w-6 h-6 text-white" />
@@ -266,15 +266,15 @@ const SuperadminDashboard: React.FC = () => {
               return (
                 <button
                   key={index}
-                  className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300 w-full text-left focus:outline-none"
+                  className="card p-6 hover:shadow-xl transition-shadow duration-300 w-full text-left focus:outline-none"
                   onClick={handleShowRevenue}
                   title="View monthly revenue chart"
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-gray-600 mb-1">{stat.label}</p>
-                      <p className="text-2xl font-bold text-gray-800">{stat.value}</p>
-                      <p className="text-sm text-green-600">{stat.change} from last month</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">{stat.label}</p>
+                      <p className="text-2xl font-bold text-gray-800 dark:text-gray-200">{stat.value}</p>
+                      <p className="text-sm text-green-600 dark:text-green-400">{stat.change} from last month</p>
                     </div>
                     <div className={`p-3 rounded-full bg-gradient-to-r ${stat.color}`}>
                       <stat.icon className="w-6 h-6 text-white" />
@@ -286,15 +286,15 @@ const SuperadminDashboard: React.FC = () => {
               return (
                 <button
                   key={index}
-                  className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300 w-full text-left focus:outline-none"
+                  className="card p-6 hover:shadow-xl transition-shadow duration-300 w-full text-left focus:outline-none"
                   onClick={stat.onClick}
                   title="Set targets for performance score"
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-gray-600 mb-1">{stat.label}</p>
-                      <p className="text-2xl font-bold text-gray-800">{stat.value}</p>
-                      <p className="text-sm text-green-600">{stat.change} from last month</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">{stat.label}</p>
+                      <p className="text-2xl font-bold text-gray-800 dark:text-gray-200">{stat.value}</p>
+                      <p className="text-sm text-green-600 dark:text-green-400">{stat.change} from last month</p>
                     </div>
                     <div className={`p-3 rounded-full bg-gradient-to-r ${stat.color}`}>
                       <stat.icon className="w-6 h-6 text-white" />
@@ -304,12 +304,12 @@ const SuperadminDashboard: React.FC = () => {
               );
             } else {
               return (
-                <div key={index} className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300">
+                <div key={index} className="card p-6 hover:shadow-xl transition-shadow duration-300">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-gray-600 mb-1">{stat.label}</p>
-                      <p className="text-2xl font-bold text-gray-800">{stat.value}</p>
-                      <p className="text-sm text-green-600">{stat.change} from last month</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">{stat.label}</p>
+                      <p className="text-2xl font-bold text-gray-800 dark:text-gray-200">{stat.value}</p>
+                      <p className="text-sm text-green-600 dark:text-green-400">{stat.change} from last month</p>
                     </div>
                     <div className={`p-3 rounded-full bg-gradient-to-r ${stat.color}`}>
                       <stat.icon className="w-6 h-6 text-white" />
@@ -334,12 +334,12 @@ const SuperadminDashboard: React.FC = () => {
           <Modal isOpen={showDepartmentsModal} onClose={() => setShowDepartmentsModal(false)} title="Departments">
             <div className="space-y-2">
               {departmentsList.length === 0 ? (
-                <div className="text-center py-4">No departments found.</div>
+                <div className="text-center py-4 text-gray-600 dark:text-gray-400">No departments found.</div>
               ) : (
                 departmentsList.map(dep => (
                   <button
                     key={dep}
-                    className="block w-full text-left px-4 py-2 rounded hover:bg-orange-100"
+                    className="block w-full text-left px-4 py-2 rounded hover:bg-orange-100 dark:hover:bg-orange-900/20 text-gray-900 dark:text-gray-100"
                     onClick={() => {
                       setSelectedDepartment(dep);
                       setShowDepartmentsModal(false);
@@ -364,7 +364,7 @@ const SuperadminDashboard: React.FC = () => {
 
         {selectedTab === 'profile' && (
           <div className="space-y-6">
-            <h3 className="text-lg font-semibold text-gray-900">Profile</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Profile</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <AvatarUploader
@@ -377,16 +377,16 @@ const SuperadminDashboard: React.FC = () => {
               </div>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Full Name</label>
-                  <p className="mt-1 text-sm text-gray-900">{user.name}</p>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Full Name</label>
+                  <p className="mt-1 text-sm text-gray-900 dark:text-gray-100">{user.name}</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Email</label>
-                  <p className="mt-1 text-sm text-gray-900">{user.email}</p>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+                  <p className="mt-1 text-sm text-gray-900 dark:text-gray-100">{user.email}</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Role</label>
-                  <p className="mt-1 text-sm text-gray-900 capitalize">{user.role}</p>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Role</label>
+                  <p className="mt-1 text-sm text-gray-900 dark:text-gray-100 capitalize">{user.role}</p>
                 </div>
               </div>
             </div>
@@ -396,12 +396,12 @@ const SuperadminDashboard: React.FC = () => {
   {/* Admin Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-4">
           {adminStats.map((stat, index) => (
-            <div key={index} className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300">
+            <div key={index} className="card p-6 hover:shadow-xl transition-shadow duration-300">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">{stat.label}</p>
-                  <p className="text-2xl font-bold text-gray-800">{stat.value}</p>
-                  <p className="text-sm text-green-600">{stat.change} from last month</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">{stat.label}</p>
+                  <p className="text-2xl font-bold text-gray-800 dark:text-gray-200">{stat.value}</p>
+                  <p className="text-sm text-green-600 dark:text-green-400">{stat.change} from last month</p>
                 </div>
                 <div className={`p-3 rounded-full bg-gradient-to-r ${stat.color}`}>
                   <stat.icon className="w-6 h-6 text-white" />
@@ -425,7 +425,7 @@ const SuperadminDashboard: React.FC = () => {
 
         {/* Admin Features Section */}
         <div>
-          <h2 className="text-2xl font-bold mb-4 text-orange-700">Admin Features</h2>
+          <h2 className="text-2xl font-bold mb-4 text-orange-700 dark:text-orange-400">Admin Features</h2>
           <div>
             {/* Pass handleGenerateReport to AdminDashboard if needed, or add a Monthly Report button here */}
             <Link href="/dashboard/reports" className="mb-4 inline-block px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 transition">

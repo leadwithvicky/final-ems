@@ -104,21 +104,21 @@ const PayrollAdminPanel: React.FC = () => {
     <div className="space-y-4">
       <div className="flex flex-wrap items-end gap-3">
         <div>
-          <label className="block text-sm text-gray-700 mb-1">Month</label>
-          <select className="border rounded px-2 py-1" value={month} onChange={e=>setMonth(parseInt(e.target.value))}>
+          <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Month</label>
+          <select className="input" value={month} onChange={e=>setMonth(parseInt(e.target.value))}>
             {Array.from({length:12},(_,i)=>i+1).map(m=> (
               <option key={m} value={m}>{m}</option>
             ))}
           </select>
         </div>
         <div>
-          <label className="block text-sm text-gray-700 mb-1">Year</label>
-          <input className="border rounded px-2 py-1 w-28" type="number" value={year} onChange={e=>setYear(parseInt(e.target.value)||year)} />
+          <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Year</label>
+          <input className="input w-28" type="number" value={year} onChange={e=>setYear(parseInt(e.target.value)||year)} />
         </div>
         <div>
-          <label className="block text-sm text-gray-700 mb-1">Department</label>
+          <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Department</label>
           <select 
-            className="border rounded px-2 py-1 w-48" 
+            className="input w-48" 
             value={department} 
             onChange={e=>setDepartment(e.target.value)}
           >
@@ -129,44 +129,44 @@ const PayrollAdminPanel: React.FC = () => {
           </select>
         </div>
         <div className="flex-1 min-w-[200px]">
-          <label className="block text-sm text-gray-700 mb-1">Notes (optional)</label>
-          <input className="border rounded px-2 py-1 w-full" value={notes} onChange={e=>setNotes(e.target.value)} placeholder="e.g., Mid-year bonus included" />
+          <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Notes (optional)</label>
+          <input className="input w-full" value={notes} onChange={e=>setNotes(e.target.value)} placeholder="e.g., Mid-year bonus included" />
         </div>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <div>
-          <label className="block text-sm text-gray-700 mb-1">Bonus</label>
-          <input className="border rounded px-2 py-1 w-full" type="number" min={0} value={bonus} onChange={e=>setBonus(parseInt(e.target.value)||0)} />
+          <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Bonus</label>
+          <input className="input w-full" type="number" min={0} value={bonus} onChange={e=>setBonus(parseInt(e.target.value)||0)} />
         </div>
         <div>
-          <label className="block text-sm text-gray-700 mb-1">Allow. Housing</label>
-          <input className="border rounded px-2 py-1 w-full" type="number" min={0} value={allowHousing} onChange={e=>setAllowHousing(parseInt(e.target.value)||0)} />
+          <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Allow. Housing</label>
+          <input className="input w-full" type="number" min={0} value={allowHousing} onChange={e=>setAllowHousing(parseInt(e.target.value)||0)} />
         </div>
         <div>
-          <label className="block text-sm text-gray-700 mb-1">Allow. Transport</label>
-          <input className="border rounded px-2 py-1 w-full" type="number" min={0} value={allowTransport} onChange={e=>setAllowTransport(parseInt(e.target.value)||0)} />
+          <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Allow. Transport</label>
+          <input className="input w-full" type="number" min={0} value={allowTransport} onChange={e=>setAllowTransport(parseInt(e.target.value)||0)} />
         </div>
         <div>
-          <label className="block text-sm text-gray-700 mb-1">Allow. Meal</label>
-          <input className="border rounded px-2 py-1 w-full" type="number" min={0} value={allowMeal} onChange={e=>setAllowMeal(parseInt(e.target.value)||0)} />
+          <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Allow. Meal</label>
+          <input className="input w-full" type="number" min={0} value={allowMeal} onChange={e=>setAllowMeal(parseInt(e.target.value)||0)} />
         </div>
         <div>
-          <label className="block text-sm text-gray-700 mb-1">Allow. Other</label>
-          <input className="border rounded px-2 py-1 w-full" type="number" min={0} value={allowOther} onChange={e=>setAllowOther(parseInt(e.target.value)||0)} />
+          <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Allow. Other</label>
+          <input className="input w-full" type="number" min={0} value={allowOther} onChange={e=>setAllowOther(parseInt(e.target.value)||0)} />
         </div>
       </div>
 
       <div className="flex flex-wrap items-end gap-3">
         <div className="flex items-center gap-2">
           <input id="recompute" type="checkbox" checked={recompute} onChange={e=>setRecompute(e.target.checked)} />
-          <label htmlFor="recompute" className="text-sm text-gray-700">Recompute existing</label>
+          <label htmlFor="recompute" className="text-sm text-gray-700 dark:text-gray-300">Recompute existing</label>
         </div>
         {recompute && (
           <div className="flex-1 min-w-[200px]">
-            <label className="block text-sm text-gray-700 mb-1">Recompute Reason (required)</label>
+            <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Recompute Reason (required)</label>
             <input 
-              className="border rounded px-2 py-1 w-full" 
+              className="input w-full" 
               value={recomputeReason} 
               onChange={e=>setRecomputeReason(e.target.value)} 
               placeholder="e.g., Attendance correction, Leave adjustment" 
@@ -202,16 +202,16 @@ const PayrollAdminPanel: React.FC = () => {
       </div>
 
       {stats && (
-        <div className="bg-gray-50 rounded p-4 text-sm text-gray-800">
+        <div className="card p-4 text-sm">
           <div className="flex gap-6">
-            <div><span className="font-medium">Employees:</span> {stats.count}</div>
-            <div><span className="font-medium">Total Payout:</span> ₹{stats.totalPayout}</div>
+            <div className="text-gray-800 dark:text-gray-200"><span className="font-medium">Employees:</span> {stats.count}</div>
+            <div className="text-gray-800 dark:text-gray-200"><span className="font-medium">Total Payout:</span> ₹{stats.totalPayout}</div>
             <div className="flex gap-2 items-center">
-              <span className="font-medium">Status:</span>
-              <span className="px-2 py-0.5 rounded bg-yellow-100 text-yellow-800">pending: {stats.statusCounts?.pending||0}</span>
-              <span className="px-2 py-0.5 rounded bg-blue-100 text-blue-800">processed: {stats.statusCounts?.processed||0}</span>
-              <span className="px-2 py-0.5 rounded bg-purple-100 text-purple-800">finalized: {stats.statusCounts?.finalized||0}</span>
-              <span className="px-2 py-0.5 rounded bg-green-100 text-green-800">paid: {stats.statusCounts?.paid||0}</span>
+              <span className="font-medium text-gray-800 dark:text-gray-200">Status:</span>
+              <span className="px-2 py-0.5 rounded bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-200">pending: {stats.statusCounts?.pending||0}</span>
+              <span className="px-2 py-0.5 rounded bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200">processed: {stats.statusCounts?.processed||0}</span>
+              <span className="px-2 py-0.5 rounded bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-200">finalized: {stats.statusCounts?.finalized||0}</span>
+              <span className="px-2 py-0.5 rounded bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200">paid: {stats.statusCounts?.paid||0}</span>
             </div>
           </div>
         </div>
@@ -230,10 +230,10 @@ const PayrollAdminPanel: React.FC = () => {
         </div>
       )}
 
-      <div className="overflow-x-auto">
-        <table className="min-w-full text-sm">
+      <div className="overflow-x-auto card p-3">
+        <table className="table min-w-full">
           <thead>
-            <tr className="text-left text-gray-600">
+            <tr className="text-left">
               <th className="py-2">Employee</th>
               <th className="py-2">Basic</th>
               <th className="py-2">Overtime</th>
@@ -245,7 +245,7 @@ const PayrollAdminPanel: React.FC = () => {
           </thead>
           <tbody>
             {list.map((p:any)=> (
-              <tr key={p._id} className="border-t">
+              <tr key={p._id} className="border-t border-gray-200 dark:border-gray-800">
                 <td className="py-2">{(p.employeeId?.firstName && p.employeeId?.lastName) ? `${p.employeeId.firstName} ${p.employeeId.lastName}` : (p.employeeId?.fullName || 'Employee')}</td>
                 <td className="py-2">₹{p.basicSalary}</td>
                 <td className="py-2">₹{p.overtime}</td>
@@ -298,7 +298,7 @@ const PayrollAdminPanel: React.FC = () => {
                           toast.error(e?.response?.data?.message || 'Failed to fetch payslip');
                         }
                       }}
-                      className="px-2 py-1 rounded border text-xs"
+                      className="px-2 py-1 rounded border text-xs dark:border-gray-700"
                     >
                       Payslip
                     </button>
@@ -318,7 +318,7 @@ const PayrollAdminPanel: React.FC = () => {
                           toast.error(e?.response?.data?.message || 'Failed to download PDF');
                         }
                       }}
-                      className="px-2 py-1 rounded border text-xs"
+                      className="px-2 py-1 rounded border text-xs dark:border-gray-700"
                     >
                       PDF
                     </button>
@@ -341,7 +341,7 @@ const PayrollAdminPanel: React.FC = () => {
                           });
                           setAdjReason('');
                         }}
-                        className="px-2 py-1 rounded border text-xs"
+                        className="px-2 py-1 rounded border text-xs dark:border-gray-700"
                       >
                         Adjust
                       </button>
@@ -360,47 +360,47 @@ const PayrollAdminPanel: React.FC = () => {
           <div className="space-y-3">
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               <div>
-                <label className="block text-sm text-gray-700 mb-1">Bonus</label>
-                <input type="number" min={0} className="border rounded px-2 py-1 w-full" value={adjBonus} onChange={e=>setAdjBonus(parseInt(e.target.value)||0)} />
+                <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Bonus</label>
+                <input type="number" min={0} className="input w-full" value={adjBonus} onChange={e=>setAdjBonus(parseInt(e.target.value)||0)} />
               </div>
               <div>
-                <label className="block text-sm text-gray-700 mb-1">Tax</label>
-                <input type="number" min={0} className="border rounded px-2 py-1 w-full" value={adjDed.tax} onChange={e=>setAdjDed(d=>({ ...d, tax: parseInt(e.target.value)||0 }))} />
+                <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Tax</label>
+                <input type="number" min={0} className="input w-full" value={adjDed.tax} onChange={e=>setAdjDed(d=>({ ...d, tax: parseInt(e.target.value)||0 }))} />
               </div>
               <div>
-                <label className="block text-sm text-gray-700 mb-1">PF</label>
-                <input type="number" min={0} className="border rounded px-2 py-1 w-full" value={adjDed.pension} onChange={e=>setAdjDed(d=>({ ...d, pension: parseInt(e.target.value)||0 }))} />
+                <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">PF</label>
+                <input type="number" min={0} className="input w-full" value={adjDed.pension} onChange={e=>setAdjDed(d=>({ ...d, pension: parseInt(e.target.value)||0 }))} />
               </div>
               <div>
-                <label className="block text-sm text-gray-700 mb-1">Insurance</label>
-                <input type="number" min={0} className="border rounded px-2 py-1 w-full" value={adjDed.insurance} onChange={e=>setAdjDed(d=>({ ...d, insurance: parseInt(e.target.value)||0 }))} />
+                <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Insurance</label>
+                <input type="number" min={0} className="input w-full" value={adjDed.insurance} onChange={e=>setAdjDed(d=>({ ...d, insurance: parseInt(e.target.value)||0 }))} />
               </div>
               <div>
-                <label className="block text-sm text-gray-700 mb-1">Other Deduction</label>
-                <input type="number" min={0} className="border rounded px-2 py-1 w-full" value={adjDed.other} onChange={e=>setAdjDed(d=>({ ...d, other: parseInt(e.target.value)||0 }))} />
+                <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Other Deduction</label>
+                <input type="number" min={0} className="input w-full" value={adjDed.other} onChange={e=>setAdjDed(d=>({ ...d, other: parseInt(e.target.value)||0 }))} />
               </div>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <div>
-                <label className="block text-sm text-gray-700 mb-1">Allow. Housing</label>
-                <input type="number" min={0} className="border rounded px-2 py-1 w-full" value={adjAllow.housing} onChange={e=>setAdjAllow(a=>({ ...a, housing: parseInt(e.target.value)||0 }))} />
+                <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Allow. Housing</label>
+                <input type="number" min={0} className="input w-full" value={adjAllow.housing} onChange={e=>setAdjAllow(a=>({ ...a, housing: parseInt(e.target.value)||0 }))} />
               </div>
               <div>
-                <label className="block text-sm text-gray-700 mb-1">Allow. Transport</label>
-                <input type="number" min={0} className="border rounded px-2 py-1 w-full" value={adjAllow.transport} onChange={e=>setAdjAllow(a=>({ ...a, transport: parseInt(e.target.value)||0 }))} />
+                <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Allow. Transport</label>
+                <input type="number" min={0} className="input w-full" value={adjAllow.transport} onChange={e=>setAdjAllow(a=>({ ...a, transport: parseInt(e.target.value)||0 }))} />
               </div>
               <div>
-                <label className="block text-sm text-gray-700 mb-1">Allow. Meal</label>
-                <input type="number" min={0} className="border rounded px-2 py-1 w-full" value={adjAllow.meal} onChange={e=>setAdjAllow(a=>({ ...a, meal: parseInt(e.target.value)||0 }))} />
+                <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Allow. Meal</label>
+                <input type="number" min={0} className="input w-full" value={adjAllow.meal} onChange={e=>setAdjAllow(a=>({ ...a, meal: parseInt(e.target.value)||0 }))} />
               </div>
               <div>
-                <label className="block text-sm text-gray-700 mb-1">Allow. Other</label>
-                <input type="number" min={0} className="border rounded px-2 py-1 w-full" value={adjAllow.other} onChange={e=>setAdjAllow(a=>({ ...a, other: parseInt(e.target.value)||0 }))} />
+                <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Allow. Other</label>
+                <input type="number" min={0} className="input w-full" value={adjAllow.other} onChange={e=>setAdjAllow(a=>({ ...a, other: parseInt(e.target.value)||0 }))} />
               </div>
             </div>
             <div>
-              <label className="block text-sm text-gray-700 mb-1">Reason (required)</label>
-              <input className="border rounded px-2 py-1 w-full" value={adjReason} onChange={e=>setAdjReason(e.target.value)} placeholder="Explain why this adjustment is needed" />
+              <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Reason (required)</label>
+              <input className="input w-full" value={adjReason} onChange={e=>setAdjReason(e.target.value)} placeholder="Explain why this adjustment is needed" />
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <button onClick={()=>setAdjusting(null)} className="px-3 py-1 border rounded">Cancel</button>
@@ -645,12 +645,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ hideHeader = false }) =
       {!hideHeader && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {stats.map((stat, index) => (
-            <div key={index} className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300">
+            <div key={index} className="card p-6 hover:shadow-xl transition-shadow duration-300">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">{stat.label}</p>
-                  <p className="text-2xl font-bold text-gray-800">{stat.value}</p>
-                  <p className="text-sm text-green-600">{stat.change} from last month</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">{stat.label}</p>
+                  <p className="text-2xl font-bold text-gray-800 dark:text-gray-200">{stat.value}</p>
+                  <p className="text-sm text-green-600 dark:text-green-400">{stat.change} from last month</p>
                 </div>
                 <div className={`p-3 rounded-full bg-gradient-to-r ${stat.color}`}>
                   <stat.icon className="w-6 h-6 text-white" />
@@ -663,13 +663,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ hideHeader = false }) =
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <button
+                  <button
             onClick={() => setShowAddEmployeeModal(true)}
-            className="bg-white p-4 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 text-left"
+            className="card p-4 hover:shadow-xl transition-shadow duration-300 text-left"
           >
             <UserPlus className="w-8 h-8 text-orange-500 mb-2" />
-            <h3 className="font-semibold text-gray-900">Add Employee</h3>
-            <p className="text-sm text-gray-600">Onboard new team member</p>
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100">Add Employee</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Onboard new team member</p>
           </button>
         {/* Onboarding Modal mount */}
       {/* Add Employee Modal */}
@@ -713,11 +713,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ hideHeader = false }) =
 
           <Link
             href="/dashboard/reports"
-            className="bg-white p-4 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 text-left"
+            className="card p-4 hover:shadow-xl transition-shadow duration-300 text-left"
           >
             <TrendingUp className="w-8 h-8 text-red-500 mb-2" />
-            <h3 className="font-semibold text-gray-900">Reports</h3>
-            <p className="text-sm text-gray-600">Open analytics & exports</p>
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100">Reports</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Open analytics & exports</p>
           </Link>
         </div>
 
@@ -731,8 +731,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ hideHeader = false }) =
       
 
       {/* Tab Navigation */}
-      <div className="bg-white rounded-xl shadow-lg">
-        <div className="border-b border-gray-200">
+      <div className="card">
+        <div className="border-b border-gray-200 dark:border-gray-800">
           <nav className="flex space-x-8 px-6">
             {tabs.map((tab) => (
               <button
@@ -741,7 +741,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ hideHeader = false }) =
                 className={`flex items-center space-x-2 py-4 border-b-2 font-medium text-sm transition-colors ${
                   selectedTab === tab.id
                     ? 'border-orange-500 text-orange-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
                 }`}
               >
                 <tab.icon className="w-4 h-4" />
@@ -755,30 +755,30 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ hideHeader = false }) =
           {selectedTab === 'overview' && (
             <div className="space-y-6">
               {/* Tip: Personal clock-in is in employee portal */}
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start gap-3">
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 flex items-start gap-3">
                 <div className="w-2 h-2 mt-2 bg-blue-500 rounded-full"></div>
                 <div className="flex-1">
-                  <h4 className="text-sm font-semibold text-blue-800">Personal clock-in/out</h4>
-                  <p className="text-sm text-blue-700">Admins and Super Admins should record their own attendance using an Employee login. Please log out and sign in with your employee account to clock in/out. This keeps one source of truth and avoids duplicates in reports.</p>
+                  <h4 className="text-sm font-semibold text-blue-800 dark:text-blue-200">Personal clock-in/out</h4>
+                  <p className="text-sm text-blue-700 dark:text-blue-300">Admins and Super Admins should record their own attendance using an Employee login. Please log out and sign in with your employee account to clock in/out. This keeps one source of truth and avoids duplicates in reports.</p>
                 </div>
                 {/* Link removed intentionally to avoid confusion */}
               </div>
 
               {/* Leave Requests */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Pending Leave Requests</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Pending Leave Requests</h3>
                 <div className="space-y-3">
                   {Array.isArray(leaves) && leaves.filter((l: any) => l.status === 'pending').map((leave: any) => (
-                    <div key={leave._id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div key={leave._id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
                       <div className="flex items-center gap-2">
                         <Avatar name={(leave.employee?.firstName && leave.employee?.lastName) ? `${leave.employee.firstName} ${leave.employee.lastName}` : 'Employee'} size={24} />
-                        <p className="font-medium text-gray-900">{(leave.employee?.firstName && leave.employee?.lastName) ? `${leave.employee.firstName} ${leave.employee.lastName}` : 'Employee'}</p>
-                        <p className="text-sm text-gray-600">{leave.leaveType} • {new Date(leave.startDate).toLocaleDateString()} - {new Date(leave.endDate).toLocaleDateString()} • {leave.days} days</p>
+                        <p className="font-medium text-gray-900 dark:text-gray-100">{(leave.employee?.firstName && leave.employee?.lastName) ? `${leave.employee.firstName} ${leave.employee.lastName}` : 'Employee'}</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">{leave.leaveType} • {new Date(leave.startDate).toLocaleDateString()} - {new Date(leave.endDate).toLocaleDateString()} • {leave.days} days</p>
                       </div>
                       <div className="flex space-x-2">
                         <button
                           onClick={() => setSelectedLeave(leave)}
-                          className="px-3 py-1 bg-white border rounded-lg text-sm hover:bg-gray-100"
+                          className="px-3 py-1 bg-white dark:bg-gray-700 border dark:border-gray-600 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100"
                         >
                           View
                         </button>
@@ -802,14 +802,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ hideHeader = false }) =
 
               {/* Recent Activities */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activities</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Recent Activities</h3>
                 <div className="space-y-3">
                   {recentActivities.map((activity, index) => (
-                    <div key={index} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                    <div key={index} className="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                       <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
                       <div>
-                        <p className="text-sm text-gray-900">{activity.action}</p>
-                        <p className="text-xs text-gray-500">{activity.person} • {activity.time}</p>
+                        <p className="text-sm text-gray-900 dark:text-gray-100">{activity.action}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{activity.person} • {activity.time}</p>
                       </div>
                     </div>
                   ))}
@@ -821,7 +821,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ hideHeader = false }) =
           {selectedTab === 'employees' && (
             <div className="space-y-6">
               <div className="flex justify-between items-center">
-                <h3 className="text-lg font-semibold text-gray-900">Employee Management</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Employee Management</h3>
                 <button
                   onClick={() => setShowAddEmployeeModal(true)}
                   className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors"
@@ -838,15 +838,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ hideHeader = false }) =
 
           {selectedTab === 'leaves' && (
             <div className="space-y-6">
-              <h3 className="text-lg font-semibold text-gray-900">Leave Management</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Leave Management</h3>
               <div className="space-y-3">
                 {Array.isArray(leaves) && leaves.map((leave: any) => (
-                  <div key={leave._id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  <div key={leave._id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
                     <div>
-                      <p className="font-medium text-gray-900">{(leave.employee?.firstName && leave.employee?.lastName) ? `${leave.employee.firstName} ${leave.employee.lastName}` : 'Employee'}</p>
-                      <p className="text-sm text-gray-600">{leave.leaveType} • {new Date(leave.startDate).toLocaleDateString()} - {new Date(leave.endDate).toLocaleDateString()} • {leave.days} days</p>
-                      {leave.reason && <p className="text-xs text-gray-500">Reason: {leave.reason}</p>}
-                      {leave.comments && <p className="text-xs text-gray-500">Admin Comments: {leave.comments}</p>}
+                      <p className="font-medium text-gray-900 dark:text-gray-100">{(leave.employee?.firstName && leave.employee?.lastName) ? `${leave.employee.firstName} ${leave.employee.lastName}` : 'Employee'}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">{leave.leaveType} • {new Date(leave.startDate).toLocaleDateString()} - {new Date(leave.endDate).toLocaleDateString()} • {leave.days} days</p>
+                      {leave.reason && <p className="text-xs text-gray-500 dark:text-gray-400">Reason: {leave.reason}</p>}
+                      {leave.comments && <p className="text-xs text-gray-500 dark:text-gray-400">Admin Comments: {leave.comments}</p>}
                     </div>
                     <div className="flex items-center space-x-3">
                       <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(leave.status)}`}>
@@ -896,22 +896,22 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ hideHeader = false }) =
 
           {selectedTab === 'payroll' && (
             <div className="space-y-6">
-              <h3 className="text-lg font-semibold text-gray-900">Payroll Management</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Payroll Management</h3>
               <PayrollAdminPanel />
             </div>
           )}
 
           {selectedTab === 'communication' && (
             <div className="space-y-6">
-              <h3 className="text-lg font-semibold text-gray-900">Team Communication</h3>
-              <div className="bg-gray-50 p-6 rounded-lg">
-                <p className="text-gray-600">Communication features coming soon...</p>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Team Communication</h3>
+              <div className="bg-gray-50 dark:bg-gray-800 p-6 rounded-lg">
+                <p className="text-gray-600 dark:text-gray-400">Communication features coming soon...</p>
               </div>
             </div>
           )}
           {selectedTab === 'profile' && (
             <div className="space-y-6">
-              <h3 className="text-lg font-semibold text-gray-900">Profile</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Profile</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <AvatarUploader
@@ -924,16 +924,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ hideHeader = false }) =
                 </div>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Full Name</label>
-                    <p className="mt-1 text-sm text-gray-900">{user.name}</p>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Full Name</label>
+                    <p className="mt-1 text-sm text-gray-900 dark:text-gray-100">{user.name}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Email</label>
-                    <p className="mt-1 text-sm text-gray-900">{user.email}</p>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+                    <p className="mt-1 text-sm text-gray-900 dark:text-gray-100">{user.email}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Role</label>
-                    <p className="mt-1 text-sm text-gray-900 capitalize">{user.role}</p>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Role</label>
+                    <p className="mt-1 text-sm text-gray-900 dark:text-gray-100 capitalize">{user.role}</p>
                   </div>
                 </div>
               </div>
@@ -964,19 +964,19 @@ function ReportsContent({ month, year }: { month: number; year: number }) {
 
   return (
     <div className="space-y-4">
-      <div className="bg-gray-50 p-4 rounded">
-        <h4 className="font-semibold mb-2">Payroll Overview</h4>
-        <div className="text-sm text-gray-700">
+      <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded">
+        <h4 className="font-semibold mb-2 text-gray-900 dark:text-gray-100">Payroll Overview</h4>
+        <div className="text-sm text-gray-700 dark:text-gray-300">
           <div>Employees: {payrollStats?.count ?? 0}</div>
           <div>Total Payout: ₹{payrollStats?.totalPayout ?? 0}</div>
         </div>
       </div>
-      <div className="bg-white p-2 rounded border">
+      <div className="card p-2">
         <ReportLineChart data={{ labels, values }} />
       </div>
       <div className="flex justify-end">
         <button
-          className="px-3 py-2 border rounded"
+          className="px-3 py-2 border dark:border-gray-700 rounded text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800"
           onClick={async()=>{
             try {
               const blob = await payrollAPI.exportCsv({ month, year });

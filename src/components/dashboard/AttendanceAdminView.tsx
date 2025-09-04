@@ -21,13 +21,13 @@ const AttendanceAdminView: React.FC = () => {
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
         <Clock className="w-5 h-5 text-orange-500" /> Attendance Records
       </h3>
       {/* Filters */}
       <div className="flex flex-wrap gap-3 mb-4">
         <select
-          className="border rounded px-2 py-1"
+          className="input"
           value={employeeId}
           onChange={e => setEmployeeId(e.target.value)}
         >
@@ -39,7 +39,7 @@ const AttendanceAdminView: React.FC = () => {
           ))}
         </select>
         <select
-          className="border rounded px-2 py-1"
+          className="input"
           value={department}
           onChange={e => setDepartment(e.target.value)}
         >
@@ -52,52 +52,52 @@ const AttendanceAdminView: React.FC = () => {
           <option value="Trainers">Trainers</option>
         </select>
         <input
-          className="border rounded px-2 py-1"
+          className="input"
           type="date"
           value={date}
           onChange={e => setDate(e.target.value)}
         />
         <button
-          className="bg-orange-600 text-white px-3 py-1 rounded"
+          className="bg-orange-600 text-white px-3 py-1 rounded hover:bg-orange-700"
           onClick={() => mutate()}
         >
           Filter
         </button>
       </div>
       {/* Attendance Table */}
-      <div className="overflow-x-auto">
-        <table className="min-w-full bg-white rounded shadow">
+      <div className="overflow-x-auto card p-3">
+        <table className="table min-w-full">
           <thead>
             <tr>
-              <th className="px-3 py-2 border-b">Employee</th>
-              <th className="px-3 py-2 border-b">Department</th>
-              <th className="px-3 py-2 border-b">Date</th>
-              <th className="px-3 py-2 border-b">Clock In</th>
-              <th className="px-3 py-2 border-b">Clock Out</th>
-              <th className="px-3 py-2 border-b">Status</th>
+              <th className="px-3 py-2">Employee</th>
+              <th className="px-3 py-2">Department</th>
+              <th className="px-3 py-2">Date</th>
+              <th className="px-3 py-2">Clock In</th>
+              <th className="px-3 py-2">Clock Out</th>
+              <th className="px-3 py-2">Status</th>
             </tr>
           </thead>
           <tbody>
             {isLoading ? (
-              <tr><td colSpan={6} className="text-center py-4">Loading...</td></tr>
+              <tr><td colSpan={6} className="text-center py-4 text-gray-600 dark:text-gray-400">Loading...</td></tr>
             ) : error ? (
-              <tr><td colSpan={6} className="text-center py-4 text-red-600">Error loading attendance</td></tr>
+              <tr><td colSpan={6} className="text-center py-4 text-red-600 dark:text-red-400">Error loading attendance</td></tr>
             ) : attendance.length === 0 ? (
-              <tr><td colSpan={6} className="text-center py-4">No records found</td></tr>
+              <tr><td colSpan={6} className="text-center py-4 text-gray-600 dark:text-gray-400">No records found</td></tr>
             ) : (
               attendance.map((record: any) => (
-                <tr key={record._id}>
-                  <td className="px-3 py-2 border-b">
+                <tr key={record._id} className="border-t border-gray-200 dark:border-gray-800">
+                  <td className="px-3 py-2">
                     <div className="flex items-center gap-2">
                       <Avatar name={`${record.employeeId?.firstName || ''} ${record.employeeId?.lastName || ''}`} size={20} />
-                      <span>{record.employeeId?.firstName} {record.employeeId?.lastName}</span>
+                      <span className="text-gray-900 dark:text-gray-100">{record.employeeId?.firstName} {record.employeeId?.lastName}</span>
                     </div>
                   </td>
-                  <td className="px-3 py-2 border-b">{record.employeeId?.department}</td>
-                  <td className="px-3 py-2 border-b">{new Date(record.date).toLocaleDateString()}</td>
-                  <td className="px-3 py-2 border-b">{record.clockIn ? new Date(record.clockIn).toLocaleTimeString() : '-'}</td>
-                  <td className="px-3 py-2 border-b">{record.clockOut ? new Date(record.clockOut).toLocaleTimeString() : '-'}</td>
-                  <td className="px-3 py-2 border-b">{record.status || 'present'}</td>
+                  <td className="px-3 py-2 text-gray-700 dark:text-gray-300">{record.employeeId?.department}</td>
+                  <td className="px-3 py-2 text-gray-700 dark:text-gray-300">{new Date(record.date).toLocaleDateString()}</td>
+                  <td className="px-3 py-2 text-gray-700 dark:text-gray-300">{record.clockIn ? new Date(record.clockIn).toLocaleTimeString() : '-'}</td>
+                  <td className="px-3 py-2 text-gray-700 dark:text-gray-300">{record.clockOut ? new Date(record.clockOut).toLocaleTimeString() : '-'}</td>
+                  <td className="px-3 py-2 text-gray-700 dark:text-gray-300">{record.status || 'present'}</td>
                 </tr>
               ))
             )}

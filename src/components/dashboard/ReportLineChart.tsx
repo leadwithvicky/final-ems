@@ -1,3 +1,4 @@
+"use client";
 import React from 'react';
 import { Line } from 'react-chartjs-2';
 import {
@@ -10,6 +11,7 @@ import {
   Tooltip,
   Legend
 } from 'chart.js';
+import { useTheme } from 'next-themes';
 
 ChartJS.register(
   CategoryScale,
@@ -26,14 +28,17 @@ interface ReportLineChartProps {
 }
 
 const ReportLineChart: React.FC<ReportLineChartProps> = ({ data }) => {
+  const { theme, systemTheme } = useTheme();
+  const current = theme === 'system' ? systemTheme : theme;
+  const isDark = current === 'dark';
   const chartData = {
     labels: data.labels,
     datasets: [
       {
         label: 'Monthly Growth',
         data: data.values,
-        borderColor: 'rgba(255, 99, 132, 1)',
-        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+        borderColor: isDark ? 'rgba(59, 130, 246, 1)' : 'rgba(255, 99, 132, 1)',
+        backgroundColor: isDark ? 'rgba(59, 130, 246, 0.2)' : 'rgba(255, 99, 132, 0.2)',
         tension: 0.4,
         fill: true,
       },
@@ -47,10 +52,22 @@ const ReportLineChart: React.FC<ReportLineChartProps> = ({ data }) => {
       legend: {
         display: true,
         position: 'bottom' as const,
+        labels: { color: isDark ? '#e5e7eb' : '#111827' },
       },
       title: {
         display: true,
         text: 'Monthly Report Growth',
+        color: isDark ? '#e5e7eb' : '#111827',
+      },
+    },
+    scales: {
+      x: {
+        ticks: { color: isDark ? '#cbd5e1' : '#374151' },
+        grid: { color: isDark ? 'rgba(75,85,99,0.3)' : 'rgba(229,231,235,1)' },
+      },
+      y: {
+        ticks: { color: isDark ? '#cbd5e1' : '#374151' },
+        grid: { color: isDark ? 'rgba(75,85,99,0.3)' : 'rgba(229,231,235,1)' },
       },
     },
   } as const;

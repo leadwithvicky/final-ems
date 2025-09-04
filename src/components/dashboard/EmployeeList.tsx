@@ -128,35 +128,35 @@ const EmployeeList: React.FC = () => {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow p-4">
+    <div className="card p-4">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-4 mb-4">
         <input
-          className="border rounded px-3 py-2 w-full md:w-64"
+          className="input w-full md:w-64"
           placeholder="Search name, email, position..."
           value={q}
           onChange={e => { setQ(e.target.value); setPage(1); }}
         />
-        <select className="border rounded px-3 py-2" value={department} onChange={e => { setDepartment(e.target.value); setPage(1); }}>
+        <select className="input" value={department} onChange={e => { setDepartment(e.target.value); setPage(1); }}>
           <option value="">All departments</option>
           {(departments || []).map((d: string) => (
             <option key={d} value={d}>{d}</option>
           ))}
         </select>
-        <select className="border rounded px-3 py-2" value={status} onChange={e => { setStatus(e.target.value); setPage(1); }}>
+        <select className="input" value={status} onChange={e => { setStatus(e.target.value); setPage(1); }}>
           {statusOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
         </select>
-        <select className="border rounded px-3 py-2" value={employmentType} onChange={e => { setEmploymentType(e.target.value); setPage(1); }}>
+        <select className="input" value={employmentType} onChange={e => { setEmploymentType(e.target.value); setPage(1); }}>
           {employmentTypeOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
         </select>
-        <select className="border rounded px-3 py-2" value={sort} onChange={e => setSort(e.target.value)}>
+        <select className="input" value={sort} onChange={e => setSort(e.target.value)}>
           {sortOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
         </select>
       </div>
 
       <div className="overflow-x-auto">
-        <table className="min-w-full text-sm">
+        <table className="table min-w-full">
           <thead>
-            <tr className="text-left text-gray-600">
+            <tr className="text-left">
               <th className="py-2">Name</th>
               <th className="py-2">Email</th>
               <th className="py-2">Department</th>
@@ -168,23 +168,23 @@ const EmployeeList: React.FC = () => {
           </thead>
           <tbody>
             {isLoading ? (
-              <tr><td className="py-4" colSpan={7}>Loading...</td></tr>
+              <tr><td className="py-4 text-gray-600 dark:text-gray-400" colSpan={7}>Loading...</td></tr>
             ) : items.length === 0 ? (
-              <tr><td className="py-4" colSpan={7}>No employees found.</td></tr>
+              <tr><td className="py-4 text-gray-600 dark:text-gray-400" colSpan={7}>No employees found.</td></tr>
             ) : items.map((emp: any) => (
-              <tr key={emp._id} className="border-t">
-                <td className="py-2 font-medium">{emp.firstName} {emp.lastName}</td>
-                <td className="py-2">{emp.email}</td>
-                <td className="py-2">{emp.department}</td>
-                <td className="py-2">{emp.position}</td>
-                <td className="py-2 capitalize">{emp.status || (emp.isActive ? 'active' : 'inactive')}</td>
-                <td className="py-2 capitalize">{(emp.employmentType || '').replace('_',' ')}</td>
+              <tr key={emp._id} className="border-t border-gray-200 dark:border-gray-800">
+                <td className="py-2 font-medium text-gray-900 dark:text-gray-100">{emp.firstName} {emp.lastName}</td>
+                <td className="py-2 text-gray-700 dark:text-gray-300">{emp.email}</td>
+                <td className="py-2 text-gray-700 dark:text-gray-300">{emp.department}</td>
+                <td className="py-2 text-gray-700 dark:text-gray-300">{emp.position}</td>
+                <td className="py-2 capitalize text-gray-700 dark:text-gray-300">{emp.status || (emp.isActive ? 'active' : 'inactive')}</td>
+                <td className="py-2 capitalize text-gray-700 dark:text-gray-300">{(emp.employmentType || '').replace('_',' ')}</td>
                 <td className="py-2">
                   <div className="flex gap-2">
-                    <button className="text-blue-600 hover:underline" onClick={()=>handleEdit(emp)}>Edit</button>
+                    <button className="text-blue-600 dark:text-blue-400 hover:underline" onClick={()=>handleEdit(emp)}>Edit</button>
                     {/* Transfer temporarily disabled */}
-                    <button className="text-teal-600 hover:underline">Docs</button>
-                    <button className="text-rose-600 hover:underline" onClick={()=>handleDeactivate(emp)}>Deactivate</button>
+                    <button className="text-teal-600 dark:text-teal-400 hover:underline">Docs</button>
+                    <button className="text-rose-600 dark:text-rose-400 hover:underline" onClick={()=>handleDeactivate(emp)}>Deactivate</button>
                   </div>
                 </td>
               </tr>
@@ -194,15 +194,15 @@ const EmployeeList: React.FC = () => {
       </div>
 
       <div className="flex items-center justify-between mt-4">
-        <div className="text-sm text-gray-600">Page {page} of {totalPages}</div>
+        <div className="text-sm text-gray-600 dark:text-gray-400">Page {page} of {totalPages}</div>
         <div className="flex gap-2">
           <button
-            className="px-3 py-1 border rounded disabled:opacity-50"
+            className="px-3 py-1 border dark:border-gray-700 rounded disabled:opacity-50 text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800"
             onClick={() => setPage(p => Math.max(1, p - 1))}
             disabled={page <= 1}
           >Previous</button>
           <button
-            className="px-3 py-1 border rounded disabled:opacity-50"
+            className="px-3 py-1 border dark:border-gray-700 rounded disabled:opacity-50 text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800"
             onClick={() => setPage(p => Math.min(totalPages, p + 1))}
             disabled={page >= totalPages}
           >Next</button>
@@ -212,7 +212,7 @@ const EmployeeList: React.FC = () => {
       {editing && (
         <Modal isOpen={!!editing} onClose={()=>setEditing(null)} title={`Edit Employee – ${editing.firstName} ${editing.lastName}`}>
           <div className="space-y-3">
-            {error && <div className="text-sm text-red-600">{error}</div>}
+            {error && <div className="text-sm text-red-600 dark:text-red-400">{error}</div>}
             <EmployeeForm
               mode="edit"
               submitLabel={saving? 'Saving...' : 'Save'}
